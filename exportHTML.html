@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <title>设备测试</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+</head>
+<body>
+    <div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" data-cmdname="on" style="width: 15%; padding: 0px; margin: 0px;">打开插座</button></div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" data-cmdname="off" style="width: 15%; padding: 0px; margin: 0px;">关闭插座</button></div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" data-cmdname="read power" style="width: 15%; padding: 0px; margin: 0px;">读插座的功率</button></div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" data-cmdname="read stalus" style="width: 15%; padding: 0px; margin: 0px;">读插座的状态</button></div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" data-cmdname="leave net" style="width: 15%; padding: 0px; margin: 0px;">退网</button></div><div data-v-469af010="" class="infoBox" style="display: none;"><input data-v-469af010="" id="operation" value="test"><input data-v-469af010="" id="product_id" data-code="00015901"><input data-v-469af010="" id="serial_num" value="000d6f0004c7ebfb"><input data-v-469af010="" id="url" value="/device/deviceControlBySerialNum"><input data-v-469af010="" id="account" value="C28000"><input data-v-469af010="" id="token" value="11111111"><input data-v-469af010="" id="default" value="1"></div>
+</body>
+<script>
+    var FLAG = 'false';
+    getCmdParams = function(thisDom){
+            var operation =  $("#operation").val();
+            var paramsArray = $("#paramsForm").serializeArray();
+            var map = {};
+            $.each(paramsArray, function () {
+                map[this.name] = this.value
+            });
+            var array =  {
+                operation:operation,
+                controlParams:map
+            };
+            return array;
+        };
+
+         commonSend = function(event) {
+            if(FLAG === 'false'){
+                var serial_num = $("#serial_num").val();
+                var product_code = $("#product_id").attr("data-code");
+                var operation = event.target.getAttribute("data-cmdName");//cmd_name
+                var paramsArray = $("#paramsForm").serializeArray();
+                var token = $("#token").val();
+                var url = $("#url").val();
+                var account = $("#account").val();
+                var flag = true;
+                $.each(paramsArray, function () {
+                    //做参数验证暂时做非空验证
+                    if (this.value == "") {
+                        var param_name = $("#" + this.name).parent().prev().text();
+                        msg(param_name + "不能为空", '#' + button.id);
+                        flag = false;
+                        return false;
+                    }
+                });
+                //参数验证通过发送指令
+                if (flag) {
+                    var params = $("#paramsForm").serializeObject();
+                    $.ajax({
+                        url: url,
+                        data: JSON.stringify({
+                            serial_num: serial_num,
+                            productId: product_code,
+                            operation: operation,
+                            controlParams: encodeURIComponent(JSON.stringify(params)),
+                            account: account
+                        }),
+                        async: true,
+                        dataType: 'json',
+                        contentType: 'application/json',
+                        type: 'post',
+                        success: function (data) {
+                            if (data.code === 0||data.code === '0') {
+                                msg('操作成功,' + JSON.stringify(data));
+                            } else if (data.code == '-2') {
+                                msg('设备无应答');
+                            } else if (data.code == 'AA') {
+                                msg('发送控制指令失败' );
+                            } else {
+                                msg('控制失败,' + data.message)
+                            }
+                        }
+                    })
+                }
+            }
+        }
+    function getField(flag,array,json){
+        FLAG = flag;
+        $("#serial_num").val(json.serial_num);
+        $("#url").val(json.url);
+        $("#account").val(json.account);
+    }
+    $.fn.serializeObject = function () {
+        var o = {};
+        var a = this.serializeArray();
+        $.each(a, function () {
+            if (o[this.name]) {
+                if (!o[this.name].push) {
+                    o[this.name] = [o[this.name]];
+                }
+                o[this.name].push(this.value || '');
+            } else {
+                o[this.name] = this.value || '';
+            }
+        });
+        return o;
+    };
+    function msg(status) {
+        $('#msgBox').show()
+        $('#msgBox').val(status)
+    }
+</script>
+</html>

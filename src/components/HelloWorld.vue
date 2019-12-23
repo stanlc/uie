@@ -6,11 +6,11 @@
             <el-button type="text" class="topBtn" @click="gethtml">预览</el-button>
             <el-button type="text" class="topBtn">退一步</el-button>
             <el-button type="text" class="topBtn">进一步</el-button>
-            <el-button type="text" class="topBtn">刷新</el-button>
+            <el-button type="text" class="topBtn" @click="form=[]">重置</el-button>
         </div>
         <div style="float:right">
           <el-button type="text" class="topBtn" @click="pageflag=!pageflag">{{pagetype}}</el-button>
-            <el-button type="text" class="topBtn">测试</el-button>
+            <el-button type="text" class="topBtn" >测试</el-button>
             <el-button type="text" class="topBtn" @click="exportHtml">保存</el-button>
             <el-button type="text" class="topBtn">关闭</el-button>
         </div>
@@ -19,7 +19,7 @@
         <div class="list">
           <ul>
             <li v-for="item in cmdList" :key="item.id">
-              <el-button @click="addComp(item)">{{item.cmd_readme}}</el-button>
+              <el-button type="text" @click="addComp(item)" :disabled="form.findIndex(e=>e.name===item.cmd_readme)>-1">{{item.cmd_readme}}</el-button>
             </li>
           </ul>
         </div>
@@ -34,8 +34,9 @@
                 style="display:inline">
                 <button
                 tonclick="commonSend(event)"
-                style="width:15%;padding:0px;margin:0px;"
                 :data-cmdName="element.cmdName"
+                :style="btnStyle"
+                v-if="element.type==='btn'"
                 >{{element.name}}</button>
                 </div>
                 <div class="infoBox" v-show="false">
@@ -68,6 +69,9 @@
                 <el-form-item label="组件外边距"> 
                    <el-input v-model="WgMargin" @change="MarginChange"></el-input>
                 </el-form-item>
+                <el-form-item>
+                  <el-button @click="remove">删除</el-button>
+                </el-form-item>
               </el-form>
             </el-tab-pane>
             <el-tab-pane label="高级" name="third">高级</el-tab-pane>
@@ -77,6 +81,7 @@
     </div>
   </div>
 </template>
+
 
 <script>
 import draggable from 'vuedraggable'
@@ -103,6 +108,10 @@ export default {
       rawHtml:'',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
+      btnStyle:`width:15%;padding:5px;
+                margin:5px 0 0 5px;background:#78bdf3;
+                border:none;border-radius:5px;
+                color:#fff;`
     }
   },
   computed:{
@@ -110,8 +119,13 @@ export default {
       return this.pageflag===true?'PC':'APP'
     },
     cmdCode(){
-      let a = window.location.href
-      return a.substr(a.indexOf('=')+1,a.length-1)
+      if(sessionStorage.getItem('productCode')){
+        return sessionStorage.getItem('productCode')
+      }else{
+        let a = window.location.href
+        return a.substr(a.indexOf('=')+1,a.length-1)
+      }
+      
     }
   },
   mounted(){
@@ -132,11 +146,30 @@ export default {
       })
     },
     addComp(e){
-      console.log(e)
-      this.form.push({
-        name:e.cmd_readme,
-        cmdName:e.cmd_name,
-      })
+      if(e.cmdDownParams.length===0){
+          this.form.push({
+          name:e.cmd_readme,
+          cmdName:e.cmd_name,
+          id:e.id,
+          type:'btn'
+        })
+      }else{
+        let arr = e.cmdDownParams
+        this.form.push({
+          name:e.cmd_readme,
+          cmdName:e.cmd_name,
+        })
+        arr.map(item=>{
+            this.form.push({
+            name:e.cmd_readme+item.param_name,
+            cmdName:item.param_readme,
+            type:item.param_type
+          })
+        })
+      }
+      
+
+
       if(this.selectWg){
         // this.selectWg.style.width='200px'
         //设置选择组件的自定义数据
@@ -157,9 +190,10 @@ export default {
     gethtml(){
       let a = document.getElementById('uibox').innerHTML
       this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
-      console.log(this.rawHtml)
+      // console.log(this.rawHtml)
     },
     exportHtml(){
+      this.gethtml()
       let html = util.exportHtml(this.rawHtml)
       this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode}).then(res=>{
         console.log(res.data)
@@ -183,6 +217,11 @@ export default {
         this.selectWg.style.margin = this.WgMargin
       }
     },
+    remove(){
+      let name = this.selectWg.innerHTML
+      let index = this.form.findIndex(item=>item.name===name)
+      this.form.splice(index,1)
+    }
   },
 }
 </script>
@@ -204,6 +243,7 @@ export default {
     background: #f5f8fa;
     width: 20%;
     height: 90vh;
+    overflow-y: scroll;
   }
   .uiBox{
     width: 375px;

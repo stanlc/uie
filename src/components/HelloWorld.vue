@@ -32,17 +32,35 @@
                 v-for="element in form" 
                 :key="element.id"
                 style="display:inline">
+                <!-- 只有一种指令，默认为按钮 -->
                 <button
                 tonclick="commonSend(event)"
                 :data-cmdName="element.cmdName"
                 :style="btnStyle"
+                class="sendControlBtn"
                 v-if="element.type==='btn'"
                 >{{element.name}}</button>
+                <!-- 有多种指令 -->
+                <div v-else style="display:inline">
+                  <p style="color:#fff">{{element.name}}</p>
+                  <form  :id="element.cmdName">
+                    <div v-for="item in element.obj" :key="item.param_key">
+                      <span style="color:#fff">{{item.param_name}}:</span><input :name="item.param_key"/>
+                    </div>
+                  </form>
+                  <button
+                  tonclick="commonSend(event)"
+                  :data-cmdName="element.cmdName"
+                  :data-id="element.cmdName"
+                  :style="btnStyle"
+                  class="sendControlBtn"
+                  >发送</button>
+                </div>
                 </div>
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
                   <input id="product_id" :data-code="cmdCode">
-                  <input id="serial_num" value='000d6f0004c7ebfb'>
+                  <input id="serial_num" value='000d6f000cf65257'>
                   <input id="url" value='/device/deviceControlBySerialNum'>
                   <input id="account" value='C28000'>
                   <input id="token" value='11111111'>
@@ -158,14 +176,15 @@ export default {
         this.form.push({
           name:e.cmd_readme,
           cmdName:e.cmd_name,
+          obj:arr
         })
-        arr.map(item=>{
-            this.form.push({
-            name:e.cmd_readme+item.param_name,
-            cmdName:item.param_readme,
-            type:item.param_type
-          })
-        })
+        // arr.map(item=>{
+        //     this.form.push({
+        //     name:e.cmd_readme+item.param_name,
+        //     cmdName:item.param_readme,
+        //     type:item.param_type
+        //   })
+        // })
       }
       
 
@@ -196,7 +215,12 @@ export default {
       this.gethtml()
       let html = util.exportHtml(this.rawHtml)
       this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode}).then(res=>{
-        console.log(res.data)
+        if(res.data.resultDesc==='OK'){
+          this.$message({
+            type:'success',
+            message:'保存成功'
+          })
+        }
       })
     },
     changeWgInfo(v){
@@ -251,6 +275,7 @@ export default {
     background: #111;
     transition: all ease-in-out 0.5s;
     margin: 0 auto;
+    overflow: scroll;
   }
   .PC{
     width: 960px;

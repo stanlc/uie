@@ -7,6 +7,7 @@ export default{
         <head>
             <meta charset="UTF-8">
             <title>设备测试</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.13.0/lib/theme-chalk/index.css">
             <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
         </head>
         <body>
@@ -24,13 +25,20 @@ export default{
             box-shadow: 1px 1px 3px #888888;">
             <p style="margin:0 auto;" class="msg">msg</p>
         </div>
-        `+e+
+        `+`<div id="app">`+e+`</div>`+
         `</body>
+
+        <!-- import Vue before Element -->
+        <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+        <!-- import JavaScript -->
+        <script src="https://cdn.jsdelivr.net/npm/element-ui@2.13.0/lib/index.js"></script>
+      
         <script>
         var FLAG = "false";
         getCmdParams = function(thisDom){
-                var operation =  $("#operation").val();
-                var paramsArray = $("#paramsForm").serializeArray();
+                let id = thisDom.getAttribute("data-id")
+                var operation =  thisDom.getAttribute("data-cmdName");
+                var paramsArray = $("#"+id).serializeArray();
                 var map = {};
                 $.each(paramsArray, function () {
                     map[this.name] = this.value
@@ -43,11 +51,12 @@ export default{
             };
     
              commonSend = function(event) {
+                let id = event.target.getAttribute("data-id")
                 if(FLAG === "false"){
                     var serial_num = $("#serial_num").val();
                     var product_code = $("#product_id").attr("data-code");
                     var operation = event.target.getAttribute("data-cmdName");//cmd_name
-                    var paramsArray = $("#paramsForm").serializeArray();
+                    var paramsArray =  $("#"+id).serializeArray();
                     var token = $("#token").val();
                     var url = $("#url").val();
                     var account = $("#account").val();
@@ -63,7 +72,7 @@ export default{
                     });
                     //参数验证通过发送指令
                     if (flag) {
-                        var params = $("#paramsForm").serializeObject();
+                        var params = $("#"+id).serializeObject();
                         $.ajax({
                             url: url,
                             data: JSON.stringify({
@@ -118,6 +127,14 @@ export default{
             $('p.msg').html(status)
             $("#msgBox").fadeOut(2000)
         }
+    </script>
+    <script>
+        new Vue({
+        el: '#app',
+        data: function() {
+            return { visible: false }
+        }
+        })
     </script>
     </html>`
        

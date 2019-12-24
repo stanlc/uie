@@ -41,21 +41,13 @@
                 v-if="element.type==='btn'"
                 >{{element.name}}</button>
                 <!-- 有多种指令 -->
-                <div v-else style="display:inline">
-                  <p style="color:#fff">{{element.name}}</p>
-                  <form  :id="element.cmdName">
-                    <div v-for="item in element.obj" :key="item.param_key">
-                      <span style="color:#fff">{{item.param_name}}:</span><input :name="item.param_key"/>
-                    </div>
-                  </form>
-                  <button
-                  tonclick="commonSend(event)"
-                  :data-cmdName="element.cmdName"
-                  :data-id="element.cmdName"
-                  :style="btnStyle"
-                  class="sendControlBtn"
-                  >发送</button>
-                </div>
+                <button
+                tonclick="commonSend(event)"
+                :data-cmdName="element.cmdName"
+                :style="btnStyle"
+                class="sendControlBtn"
+                v-else
+                >{{element.name}}</button>
                 </div>
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
@@ -129,7 +121,7 @@ export default {
       btnStyle:`width:15%;padding:5px;
                 margin:5px 0 0 5px;background:#78bdf3;
                 border:none;border-radius:5px;
-                color:#fff;`
+                color:#fff;cursor:pointer;`
     }
   },
   computed:{
@@ -214,7 +206,7 @@ export default {
     exportHtml(){
       this.gethtml()
       let html = util.exportHtml(this.rawHtml)
-      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode}).then(res=>{
+      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml}).then(res=>{
         if(res.data.resultDesc==='OK'){
           this.$message({
             type:'success',
@@ -272,7 +264,7 @@ export default {
   .uiBox{
     width: 375px;
     height: 667px;
-    background: #111;
+    background: #fff;
     transition: all ease-in-out 0.5s;
     margin: 0 auto;
     overflow: scroll;

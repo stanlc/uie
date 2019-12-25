@@ -4,7 +4,7 @@ import './plugins/element.js'
 import axios from 'axios'
 
 Vue.prototype.$http = axios.create({
-  baseURL:'http://'+window.location.hostname+':20001',//'http://118.31.76.126:20001'
+  baseURL:'http://118.31.76.126:20001',//'http://'+window.location.hostname+':20001',
   timeout:5000,
   
 })

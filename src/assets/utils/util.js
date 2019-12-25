@@ -1,6 +1,6 @@
 
 export default{
-    exportHtml(e){
+    exportHtml(e,bc,size){
         return `<!DOCTYPE html>
         <html>
         
@@ -25,7 +25,7 @@ export default{
             box-shadow: 1px 1px 3px #888888;">
             <p style="margin:0 auto;" class="msg">msg</p>
         </div>
-        `+`<div id="app">`+e+`</div>`+
+        `+`<div id="app" style="${size} background:url(${bc});background-size:cover;">`+e+`</div>`+
         `</body>
 
         <!-- import Vue before Element -->

@@ -34,23 +34,24 @@
         <!-- 测试窗口 -->
 
         <!-- 配置界面 -->
-        <div class="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});`">
+        <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative`">
             <draggable v-model="form" group="people" @start="drag=true" @end="drag=false" id="uibox" >
                 <div
                 v-for="element in form" 
                 :key="element.id"
-                style="display:inline;width:100%;height:100%">
+                style="display:inline;width:100%;height:100%"
+                >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
                 tonclick="commonSend(event)"
                 :data-cmdName="element.cmdName"
                 :style="btnStyle"
-                class="sendControlBtn"
+                class="sendControlBtn parentBtn"
                 v-if="element.type==='btn'"
                 >{{element.name}}</button>
                 <!-- 有多种指令 -->
                 <template v-else>
-                    <button :tonclick="`$('#${element.id}').show()`" :style="btnStyle">{{element.name}}</button>
+                    <button :tonclick="`$('#${element.id}').show()`" :style="btnStyle" class="parentBtn">{{element.name}}</button>
                     <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;">
                     <a style="position:absolute;top:0;right:0;cursor:pointer;" :tonclick="`$('#${element.id}').hide()`">X</a>
                       <div style="margin:0 auto">
@@ -94,6 +95,9 @@
         <div class="editor">
           <el-tabs v-model="activeName" @tab-click="handleClick">
             <el-tab-pane label="全局" name="first">
+              <div class="selectImgEmpty" @click="selectBc($event)">
+                <span>无主题</span>
+              </div>
               <div class="selectImg" @click="selectBc($event)" v-for="item in bcImgList" :key="item.id">
                 <img :src="item.resource_data?item.resource_data:''" />
               </div>
@@ -102,6 +106,9 @@
               <el-form>
                 <el-form-item label="组件信息">
                   <el-input v-model="selectWgInfo" @input="changeWgInfo"></el-input>
+                </el-form-item>
+                <el-form-item label="文字颜色">
+                  <el-color-picker v-model="textColor"></el-color-picker>
                 </el-form-item>
                 <el-form-item label="按钮图标">
                    <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
@@ -153,6 +160,8 @@ export default {
       selectWg:{},
       bcImg:'',
       btnImg:'',
+      canMove : false,
+      textColor:'#fff',
       pageflag:true,
       testShow:false,
       selectWgInfo:'请选择组件',
@@ -164,7 +173,8 @@ export default {
       btnStyle:`width:15%;padding:5px;
                 margin:5px 0 0 5px;background:#78bdf3;
                 border:none;border-radius:5px;
-                color:#fff;cursor:pointer;transition:all ease-in 0.5s;`
+                color:#fff;cursor:pointer;transition:width ease-in 0.5s;
+                background-size:cover;`
     }
   },
   computed:{
@@ -263,17 +273,17 @@ export default {
     },
     exportHtml(){
       this.gethtml()
-      let size = this.pagetype==='PC'?'width:1920px;height:1080px;':'width:750px;height:1334px;'
+      let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
       let html = util.exportHtml(this.rawHtml,this.bcImg,size)
-      // console.log(html)
-      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml}).then(res=>{
-        if(res.data.resultDesc==='OK'){
-          this.$message({
-            type:'success',
-            message:'保存成功'
-          })
-        }
-      })
+      console.log(html)
+      // this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml}).then(res=>{
+      //   if(res.data.resultDesc==='OK'){
+      //     this.$message({
+      //       type:'success',
+      //       message:'保存成功'
+      //     })
+      //   }
+      // })
     },
     changeWgInfo(v){
       this.selectWg.innerHTML = v
@@ -301,11 +311,11 @@ export default {
     showTest(){
       this.gethtml()
       document.getElementById('testBox').innerHTML = this.rawHtml
-      document.getElementById('testBox').style.background=`url(${this.bcImg})`
+      document.getElementById('testBox').style['background-image']=`url(${this.bcImg})`
       this.testShow = true;
     },
     close(e){
-      console.log(e)
+      // console.log(e)
       this.e = false
     },
     //选择背景图片
@@ -323,11 +333,40 @@ export default {
       }
       if(this.selectWgInfo!=='请选择组件'){
         if(e.resource_data){
-          this.selectWg.style.background=`url(${e.resource_data})`
+          this.selectWg.style['background-image']=`url(${e.resource_data})`
         }else{
           this.selectWg.style.background = '#78bdf3'
         }
       }
+    },
+    //拖拽改变定位
+    move(e){
+      let uiBox = document.getElementById('uiBox')
+      let target = e.target
+      let orgX= e.pageX;  //记录鼠标的水平位置
+      let orgY= e.pageY; //记录鼠标的垂直位置
+      this.canMove = true 
+      // e.target.onmouseout = ()=>{
+      //   document.onmousemove = null;
+      //   document.onmouseup = null;
+      // }
+      document.onmousemove = (e)=>{       //鼠标按下并移动的事件
+              //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
+              
+              if(this.canMove){
+                console.log('mouse:'+orgX+'-'+orgY)
+                  let left = target.offsetLeft +Math.round( ( e.pageX - orgX ) / 10 ) * 10;  
+                  let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
+                  console.log(left+'--'+top)
+                  //移动当前元素
+                  target.style.left = left + 'px';
+                  target.style.top = top + 'px';
+              }
+          };
+        document.onmouseup = (e) => {
+          this.canMove = false
+        };
+      // console.log(uiBox.offsetLeft)
     }
   },
 }
@@ -402,6 +441,23 @@ export default {
     color: #fff;
     cursor: pointer;
     margin: 5px;
+  }
+  .selectImgEmpty{
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    background: #fff;
+    display: inline-block;
+    text-align: center;
+    color: #111;
+    cursor: pointer;
+    margin: 5px;
+    vertical-align: top;
+    text-align: center;
+  }
+  .selectImgEmpty span{
+    margin:0 auto;
+    
   }
   .selectImg img{
     display: block;

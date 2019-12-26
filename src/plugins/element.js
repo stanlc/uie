@@ -3,7 +3,7 @@ import { Button } from 'element-ui'
 import { Table } from 'element-ui'
 import { Tabs,TabPane,Form,FormItem,Input,InputNumber,Message,Collapse,
     CollapseItem, Select,
-    Option,Popover,Scrollbar} from 'element-ui'
+    Option,Popover,Scrollbar,ColorPicker} from 'element-ui'
 Vue.use(Button)
 Vue.use(Table)
 Vue.use(Tabs)
@@ -18,6 +18,7 @@ Vue.use(Select)
 Vue.use(Option)
 Vue.use(Popover)
 Vue.use(Scrollbar)
+Vue.use(ColorPicker)
 Message.install = function (Vue, options) {
     Vue.prototype.$message = Message
   }

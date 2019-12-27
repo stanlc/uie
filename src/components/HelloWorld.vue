@@ -52,9 +52,9 @@
                 <!-- 有多种指令 -->
                 <template v-else>
                     <button :tonclick="`$('#${element.id}').show()`" :style="btnStyle" class="parentBtn">{{element.name}}</button>
-                    <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;">
+                    <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;" class="subCommond">
                     <a style="position:absolute;top:0;right:0;cursor:pointer;" :tonclick="`$('#${element.id}').hide()`">X</a>
-                      <div style="margin:0 auto">
+                      <div style="margin:0 auto" >
                         <form  :id="element.cmdName" >
                           <div v-for="item in element.obj" :key="item.param_key">
                             <span>{{item.param_name}}:</span><input :name="item.param_key"/>

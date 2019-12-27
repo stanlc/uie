@@ -37,20 +37,23 @@
         <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative`">
             <draggable v-model="form" group="people" @start="drag=true" @end="drag=false" id="uibox" >
                 <div
-                v-for="element in form" 
+                v-for="(element,index) in form" 
                 :key="element.id"
-                style="display:inline;width:100%;height:100%"
+                style="display:inline"
                 >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
-                tonclick="commonSend(event)"
+                :tonclick="element.method"
+                tonmousedown="holdDown()" 
+                tonmouseup="holdUp()"
                 :data-cmdName="element.cmdName"
-                :style="btnStyle"
+                :style="element.btnStyle"
+                :data-index='index'
                 class="sendControlBtn parentBtn"
                 v-if="element.type==='btn'"
                 >{{element.name}}</button>
                 <!-- 有多种指令 -->
-                <template v-else>
+                <!-- <template v-else>
                     <button :tonclick="`$('#${element.id}').show()`" :style="btnStyle" class="parentBtn">{{element.name}}</button>
                     <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;" class="subCommond">
                     <a style="position:absolute;top:0;right:0;cursor:pointer;" :tonclick="`$('#${element.id}').hide()`">X</a>
@@ -69,15 +72,9 @@
                           >发送</button>
                       </div>
                     </div>
-                </template>
+                </template> -->
 
-                <!-- <button
-                tonclick="commonSend(event)"
-                :data-cmdName="element.cmdName"
-                :style="btnStyle"
-                class="sendControlBtn"
-                v-else
-                >{{element.name}}</button> -->
+              
                 </div>
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
@@ -158,6 +155,7 @@ export default {
       selectedBtnImg:'',
       EditForm:{},
       selectWg:{},
+      selectIndex:0,
       bcImg:'',
       btnImg:'',
       canMove : false,
@@ -170,11 +168,24 @@ export default {
       rawHtml:'',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
-      btnStyle:`width:15%;padding:5px;
-                margin:5px 0 0 5px;background:#78bdf3;
-                border:none;border-radius:5px;
-                color:#fff;cursor:pointer;transition:width ease-in 0.5s;
-                background-size:cover;`
+      btnStyle:{
+        width:'15%',
+        padding:'5px',
+        margin:'5px 0 0 5px',
+        background:'#78bdf3',
+        border:'none',
+        'border-radius':'5px',
+        color:'#fff',
+        cursor:'pointer',
+        transition:'width ease-in 0.5s,height ease-in 0.5s',
+        'background-size':'cover'
+      },
+      pageData:{
+        title:'测试',
+        bcImg:'0',
+        wgList:[],
+        size:''
+      }          
     }
   },
   computed:{
@@ -216,7 +227,9 @@ export default {
           name:e.cmd_readme,
           cmdName:e.cmd_name,
           id:e.id,
-          type:'btn'
+          type:'btn',
+          method:'commonSend(event)',
+          btnStyle:Object.assign({},this.btnStyle),
         })
       }else{
         let arr = e.cmdDownParams
@@ -235,28 +248,23 @@ export default {
         // })
       }
       
-
-
-      if(this.selectWg){
-        // this.selectWg.style.width='200px'
-        //设置选择组件的自定义数据
-        // this.selectWg.setAttribute('data-cmdname','test')
-      }
+      this.pageData.wgList = this.form
       
     },
     //获取选择的组件
     boxClick(e){
       if(e.target.innerHTML[0]!=='<'){
         this.selectWg=e.target
-        this.selectWgInfo = e.target.innerHTML
-        this.WgWidth = this.selectWg.style.width.replace(/%/g,"")
-        this.WgPadding = this.selectWg.style.padding
-        this.WgMargin = this.selectWg.style.margin
+        this.selectIndex = e.target.getAttribute('data-index')
+        this.selectWgInfo = this.form[this.selectIndex].name
+        this.WgWidth = this.form[this.selectIndex].btnStyle.width.replace(/%/g,"")
+        this.WgPadding = this.form[this.selectIndex].btnStyle.padding
+        this.WgMargin = this.form[this.selectIndex].btnStyle.margin
       }
     },
     gethtml(){
       let a = document.getElementById('uibox').innerHTML
-      this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
+      this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/tonmousedown/g, "onmousedown").replace(/tonmouseup/g, "onmouseup").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
       // console.log(this.rawHtml)
     },
     //获取背景图片
@@ -274,7 +282,7 @@ export default {
     exportHtml(){
       this.gethtml()
       let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
-      let html = util.exportHtml(this.rawHtml,this.bcImg,size)
+      let html = util.exportHtml(this.rawHtml,size)
       console.log(html)
       // this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml}).then(res=>{
       //   if(res.data.resultDesc==='OK'){
@@ -286,21 +294,21 @@ export default {
       // })
     },
     changeWgInfo(v){
-      this.selectWg.innerHTML = v
+      this.form[this.selectIndex].name = v
     },
     WidthChange(){
       if(this.selectWg.style){
-        this.selectWg.style.width=this.WgWidth+'%'
+        this.form[this.selectIndex].btnStyle.width=this.WgWidth+'%'
       }
     },
     PaddingChange(){
       if(this.selectWg.style){
-        this.selectWg.style.padding = this.WgPadding
+        this.form[this.selectIndex].btnStyle.padding = this.WgPadding
       }
     },
     MarginChange(){
       if(this.selectWg.style){
-        this.selectWg.style.margin = this.WgMargin
+        this.form[this.selectIndex].btnStyle.margin = this.WgMargin
       }
     },
     remove(){
@@ -322,6 +330,7 @@ export default {
     selectBc(e){
       // e.target.style.border = 'solid 2px blue'
       this.bcImg = e.target.src
+      this.pageData.bcImg = e.target.src
     },
     btnImgSelected(e){
       if(e.resource_data){

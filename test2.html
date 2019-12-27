@@ -1,7 +1,4 @@
-
-export default{
-    exportHtml(e){
-        return `<!DOCTYPE html>
+<!DOCTYPE html>
         <html>
         
         <head>
@@ -25,12 +22,11 @@ export default{
             box-shadow: 1px 1px 3px #888888;">
             <p style="margin:0 auto;" class="msg">msg</p>
         </div>
-        `+`<div id="app">
+        <div id="app">
             <div id="nickName" >
-                <span>别名：</span><input v-model="nickName"/>
+                <span>修改别名：</span><input v-model="nickName"/>
                 <button @click="changeNickName">确认</button>
-            </div>`+e+`</div>`+
-        `</body>
+            </div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" onmousedown="holdDown(event)" onmouseup="holdUp()" data-cmdname="on" data-index="0" class="sendControlBtn parentBtn" style="width: 15%; padding: 5px; margin: 5px 0px 0px 5px; background:  0% 0% / cover rgb(120, 189, 243); border: none; border-radius: 5px; color: rgb(255, 255, 255); cursor: pointer; transition: width 0.5s ease-in 0s, height 0.5s ease-in 0s;">打开插座</button></div><div data-v-469af010="" style="display: inline;"><button data-v-469af010="" onclick="commonSend(event)" onmousedown="holdDown(event)" onmouseup="holdUp()" data-cmdname="off" data-index="1" class="sendControlBtn parentBtn" style="width: 15%; padding: 5px; margin: 5px 0px 0px 5px; background:  0% 0% / cover rgb(120, 189, 243); border: none; border-radius: 5px; color: rgb(255, 255, 255); cursor: pointer; transition: width 0.5s ease-in 0s, height 0.5s ease-in 0s;">关闭插座</button></div><div data-v-469af010="" class="infoBox" style="display: none;"><input data-v-469af010="" id="operation" value="test"><input data-v-469af010="" id="product_id" data-code="00015901"><input data-v-469af010="" id="serial_num" value="000d6f000cf65257"><input data-v-469af010="" id="url" value="/device/deviceControlBySerialNum"><input data-v-469af010="" id="account" value="C28000"><input data-v-469af010="" id="token" value="11111111"><input data-v-469af010="" id="default" value="1"></div></div></body>
 
         <!-- import Vue before Element -->
         <script src="https://cdn.jsdelivr.net/npm/vue"></script>
@@ -139,9 +135,10 @@ export default{
                 var now=new Date();
                 return now.getTime();
         };
-        var holdDown = function holdDown()//鼠标按下时触发
+        holdDown = function (e)//鼠标按下时触发
         {
-            // $('.parentBtn')[0].onclick=null
+            curIndex = e.target.getAttribute('data-index')
+            $('.parentBtn')[curIndex].onclick=null
             timeStart=getTimeNow();//获取鼠标按下时的时间
             time=setInterval(function()//setInterval会每100毫秒执行一次
                 {
@@ -150,7 +147,9 @@ export default{
                     {
                         
                         clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
-                        $('#nickName').show()
+                        myVue.nickName = e.target.innerHTML
+                        $('#nickName').fadeIn(500)
+                        
             　　　       //document.getElementsByClassName('parentBtn')[0].innerHTML = '别名1'
                     }
                 },100);
@@ -162,20 +161,24 @@ export default{
         };
     </script>
     <script>
-        new Vue({
+        var myVue = new Vue({
         el: '#app',
         data: function() {
             return {
                 visible: false,
-                curIndex:window.curIndex,
+                curIndex:0,
                 nickName:'',
-                form:['','','','',''],
+                form:[],
             }
+        },
+        mounted(){
+            this.upadateNickName()
         },
         methods:{
             //设置按钮的别名
             changeNickName(){
-                this.form[0]=this.nickName
+                this.curIndex = window.curIndex
+                this.form[this.curIndex]=this.nickName
                 this.upadateNickName()
             },
             //更新别名
@@ -188,7 +191,10 @@ export default{
                         }
                     })
                 })
+                $('#nickName').fadeOut(500)
                 this.nickName=''
+                $('.parentBtn')[curIndex].onclick='commonSend(event)'
+                console.log($('.parentBtn')[curIndex])
             },
         }
         })
@@ -201,7 +207,4 @@ export default{
               left: 50%;
           }
     </style>
-    </html>`
-       
-     }
-        }
+    </html>

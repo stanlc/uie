@@ -43,18 +43,19 @@
                 >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
-                :tonclick="element.method"
-                tonmousedown="holdDown()" 
-                tonmouseup="holdUp()"
+                
+                tonmousedown="holdDown(event)" 
+                tonmouseup="holdUp(event)"
                 :data-cmdName="element.cmdName"
                 :style="element.btnStyle"
                 :data-index='index'
+                data-level='first'
                 class="sendControlBtn parentBtn"
                 v-if="element.type==='btn'"
                 >{{element.name}}</button>
                 <!-- 有多种指令 -->
-                <!-- <template v-else>
-                    <button :tonclick="`$('#${element.id}').show()`" :style="btnStyle" class="parentBtn">{{element.name}}</button>
+                <template v-else>
+                    <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
                     <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;" class="subCommond">
                     <a style="position:absolute;top:0;right:0;cursor:pointer;" :tonclick="`$('#${element.id}').hide()`">X</a>
                       <div style="margin:0 auto" >
@@ -67,12 +68,12 @@
                           :tonclick="`$('#${element.id}').hide();`+'commonSend(event);'"
                           :data-cmdName="element.cmdName"
                           :data-id="element.cmdName"
-                          :style="btnStyle"
+                          :style="element.btnStyle"
                           class="sendControlBtn"
                           >发送</button>
                       </div>
                     </div>
-                </template> -->
+                </template>
 
               
                 </div>
@@ -236,6 +237,7 @@ export default {
         this.form.push({
           name:e.cmd_readme,
           cmdName:e.cmd_name,
+          btnStyle:Object.assign({},this.btnStyle),
           id:e.id,
           obj:arr
         })

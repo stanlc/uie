@@ -132,50 +132,59 @@ export default{
             $('p.msg').html(status)
             $("#msgBox").fadeOut(2000)
         }
-        var timeStart,timeEnd,time;//申明全局变量
-             
-        function getTimeNow()//获取此刻时间
+        
+        // 长按修改别名方法
+        var loop = 1
+        holdDown = function (e)//鼠标按下时触发
         {
-                var now=new Date();
-                return now.getTime();
-        };
-        var holdDown = function holdDown()//鼠标按下时触发
-        {
-            // $('.parentBtn')[0].onclick=null
-            timeStart=getTimeNow();//获取鼠标按下时的时间
-            time=setInterval(function()//setInterval会每100毫秒执行一次
-                {
-                timeEnd=getTimeNow();//也就是每100毫秒获取一次时间
-                    if(timeEnd-timeStart>1000)//如果此时检测到的时间与第一次获取的时间差有1000毫秒
-                    {
-                        
-                        clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
-                        $('#nickName').show()
-            　　　       //document.getElementsByClassName('parentBtn')[0].innerHTML = '别名1'
-                    }
-                },100);
-        };
-        function holdUp()
-        {
-            clearInterval(time);//如果按下时间不到1000毫秒便弹起，
             
+            curIndex = e.target.getAttribute('data-index')
+            time=setInterval(function()
+                {
+                    loop = 0;
+                    clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
+                    myVue.nickName = e.target.innerHTML
+                    $('#nickName').fadeIn(500)
+                    
+                },500);
+                return false;
+        };
+        function holdUp(e)
+        {
+            clearInterval(time);//如果按下时间不到500毫秒便弹起，
+            setTimeout(()=>{loop=1},0)
+            let level = e.target.getAttribute('data-level')
+            let id = e.target.getAttribute('data-id')
+            if(loop!==0){
+                if(level==='first'){
+                    commonSend(event)
+                }else{
+                    console.log(id)
+                }
+               
+            }
+            return false
         };
     </script>
     <script>
-        new Vue({
+        var myVue = new Vue({
         el: '#app',
         data: function() {
             return {
                 visible: false,
-                curIndex:window.curIndex,
+                curIndex:0,
                 nickName:'',
-                form:['','','','',''],
+                form:[],
             }
+        },
+        mounted(){
+            this.upadateNickName()
         },
         methods:{
             //设置按钮的别名
             changeNickName(){
-                this.form[0]=this.nickName
+                this.curIndex = window.curIndex
+                this.form[this.curIndex]=this.nickName
                 this.upadateNickName()
             },
             //更新别名
@@ -188,7 +197,9 @@ export default{
                         }
                     })
                 })
+                $('#nickName').fadeOut(500)
                 this.nickName=''
+                
             },
         }
         })

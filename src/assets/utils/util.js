@@ -159,7 +159,7 @@ export default{
                 if(level==='first'){
                     commonSend(event)
                 }else{
-                    console.log(id)
+                    $('#'+id).show()
                 }
                
             }

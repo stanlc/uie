@@ -378,7 +378,6 @@ export default {
     move(e){
       let uiBox = document.getElementById('uiBox')
       let target = e.target
-      target.style.position = 'absolute'
       let orgX= e.pageX; 
       let orgY= e.pageY;
       let curX = target.style.left?target.style.left:'0'
@@ -392,6 +391,7 @@ export default {
                   // let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
                   // console.log(orgX+'--'+orgY+'---'+left+'--'+top)
                   //移动当前元素
+                  target.style.position = 'absolute'
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let x = parseInt(curX.replace(/%/g,""))  + (e.pageX-orgX)/uiBox.offsetWidth*100

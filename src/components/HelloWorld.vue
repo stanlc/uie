@@ -35,7 +35,7 @@
 
         <!-- 配置界面 -->
         <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative`">
-            <draggable v-model="form" group="people" @start="drag=true" @end="drag=false" id="uibox" >
+            
                 <div
                 v-for="(element,index) in form" 
                 :key="element.id"
@@ -90,7 +90,6 @@
                   <input id="token" value='11111111'>
                   <input id="default" value='1'>
                 </div>
-            </draggable>
         </div>
         <!-- 配置界面 -->
 
@@ -192,7 +191,7 @@ export default {
         cursor:'pointer',
         transition:'width ease-in 0.5s,height ease-in 0.5s',
         'background-size':'cover',
-        position:'absolute'
+        position:'relative'
       },
       pageData:{
         title:'测试',
@@ -205,7 +204,7 @@ export default {
   },
   computed:{
     pagetype(){
-      return this.pageflag===true?'PC':'APP'
+      return this.pageflag===true?'Pc':'Mobile'
     },
     cmdCode(){
       if(sessionStorage.getItem('productCode')){
@@ -279,7 +278,7 @@ export default {
       }
     },
     gethtml(){
-      let a = document.getElementById('uibox').innerHTML
+      let a = document.getElementById('uiBox').innerHTML
       this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/tonmousedown/g, "onmousedown").replace(/tonmouseup/g, "onmouseup").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
       // console.log(this.rawHtml)
     },
@@ -299,15 +298,15 @@ export default {
       this.gethtml()
       let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
       let html = util.exportHtml(this.rawHtml,size)
-      console.log(html)
-      // this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml}).then(res=>{
-      //   if(res.data.resultDesc==='OK'){
-      //     this.$message({
-      //       type:'success',
-      //       message:'保存成功'
-      //     })
-      //   }
-      // })
+      //console.log(html)
+      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml,type:this.pageflag?'pc':'mobile'}).then(res=>{
+        if(res.data.resultDesc==='OK'){
+          this.$message({
+            type:'success',
+            message:'保存成功'
+          })
+        }
+      })
     },
     changeWgInfo(v){
       this.form[this.selectIndex].name = v
@@ -379,20 +378,30 @@ export default {
     move(e){
       let uiBox = document.getElementById('uiBox')
       let target = e.target
-      let orgX= e.pageX-target.offsetLeft; 
-      let orgY= e.pageY-target.offsetTop;
+      target.style.position = 'absolute'
+      let orgX= e.pageX; 
+      let orgY= e.pageY;
+      let curX = target.style.left?target.style.left:'0'
+      let curY = target.style.top?target.style.top:'0'
       this.canMove = true 
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
               
               if(this.canMove){
-                // console.log('mouse:'+orgX+'-'+orgY)
                   // let left = target.offsetLeft +Math.round( ( e.pageX - orgX ) / 10 ) * 10;  
                   // let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
                   // console.log(orgX+'--'+orgY+'---'+left+'--'+top)
                   //移动当前元素
-                  target.style.left = (e.pageX-orgX)/uiBox.offsetWidth*100 + '%';
-                  target.style.top = (e.pageY-orgY)/uiBox.offsetHeight*100 + '%';
+                  let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
+                  let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
+                  let x = parseInt(curX.replace(/%/g,""))  + (e.pageX-orgX)/uiBox.offsetWidth*100
+                  if(x>xBoundary){x=xBoundary}else if(x<0){x=0}
+                  
+                  let y = parseInt(curY.replace(/%/g,"")) + (e.pageY-orgY)/uiBox.offsetHeight*100
+                  if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
+                  target.style.left =x + '%';
+                  target.style.top =y + '%';
+                  console.log(x+'-'+y)
               }
           };
         document.onmouseup = (e) => {
@@ -433,8 +442,9 @@ export default {
     overflow: scroll;
     background-size: cover !important;
     position: relative;
+    
   }
-  .PC{
+  .Pc{
     width: 960px;
     height: 540px;
   }

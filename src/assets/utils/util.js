@@ -144,6 +144,7 @@ export default{
                     loop = 0;
                     clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
                     myVue.nickName = e.target.innerHTML
+                    $('.subCommond').hide()
                     $('#nickName').fadeIn(500)
                     
                 },500);
@@ -159,6 +160,8 @@ export default{
                 if(level==='first'){
                     commonSend(event)
                 }else{
+                    $('#nickName').hide()
+                    $('.subCommond').hide()
                     $('#'+id).show()
                 }
                
@@ -210,6 +213,24 @@ export default{
               position: absolute;
               top: 10%;
               left: 50%;
+          }
+          .subCommond{
+            display:none;
+            position:absolute;
+            top:20%;
+            left:50%;
+            width:30%;
+            height:20%;
+            margin-left:-15%;
+            background:rgb(226, 221, 221);
+            text-align:center;
+            padding:15px;
+          }
+          .subCommond a{
+            position:absolute;
+            top:0;
+            right:0;
+            cursor:pointer;  
           }
     </style>
     </html>`

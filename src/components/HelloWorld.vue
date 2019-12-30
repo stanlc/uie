@@ -40,6 +40,7 @@
                 v-for="(element,index) in form" 
                 :key="element.id"
                 style="display:inline"
+                @mousedown="move"
                 >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
@@ -55,13 +56,16 @@
                 >{{element.name}}</button>
                 <!-- 有多种指令 -->
                 <template v-else>
-                    <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
-                    <div :id="element.id" style="display:none;position:absolute;top:20%;left:50%;width:30%;height:20%;margin-left:-15%;background:rgb(226, 221, 221);text-align:center;padding:15px;" class="subCommond">
-                    <a style="position:absolute;top:0;right:0;cursor:pointer;" :tonclick="`$('#${element.id}').hide()`">X</a>
+                    <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" ontouchstart="holdDown(event)" ontouchend="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
+                    <div :id="element.id" class="subCommond">
+                    <a :tonclick="`$('#${element.id}').hide()`">X</a>
                       <div style="margin:0 auto" >
                         <form  :id="element.cmdName" >
                           <div v-for="item in element.obj" :key="item.param_key">
-                            <span>{{item.param_name}}:</span><input :name="item.param_key"/>
+                            <span style="float:left">{{item.param_name}}:</span>
+                            <div class="commondInput">
+                              <input :name="item.param_key" autocomplete="off"/>
+                            </div>
                           </div>
                         </form>
                         <button
@@ -105,8 +109,16 @@
                 <el-form-item label="组件信息">
                   <el-input v-model="selectWgInfo" @input="changeWgInfo"></el-input>
                 </el-form-item>
+                <el-form-item label="显示文字">
+                  <el-switch
+                    v-model="showText"
+                    active-color="#13ce66"
+                    inactive-color="#ff4949"
+                    @change="changeText">
+                  </el-switch>
+                </el-form-item>
                 <el-form-item label="文字颜色">
-                  <el-color-picker v-model="textColor"></el-color-picker>
+                  <el-color-picker v-model="textColor" @change="colorPick"></el-color-picker>
                 </el-form-item>
                 <el-form-item label="按钮图标">
                    <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
@@ -179,14 +191,16 @@ export default {
         color:'#fff',
         cursor:'pointer',
         transition:'width ease-in 0.5s,height ease-in 0.5s',
-        'background-size':'cover'
+        'background-size':'cover',
+        position:'absolute'
       },
       pageData:{
         title:'测试',
         bcImg:'0',
         wgList:[],
         size:''
-      }          
+      },
+      showText:true,         
     }
   },
   computed:{
@@ -313,6 +327,17 @@ export default {
         this.form[this.selectIndex].btnStyle.margin = this.WgMargin
       }
     },
+    //是否显示按钮文字
+    changeText(e){
+      if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle.color = e?'rgba(255,255,255,1)':'rgba(0,0,0,0)'
+      }
+    },
+    colorPick(e){
+      if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle.color = e
+      }
+    },
     remove(){
       let name = this.selectWg.innerHTML
       let index = this.form.findIndex(item=>item.name===name)
@@ -354,27 +379,24 @@ export default {
     move(e){
       let uiBox = document.getElementById('uiBox')
       let target = e.target
-      let orgX= e.pageX;  //记录鼠标的水平位置
-      let orgY= e.pageY; //记录鼠标的垂直位置
+      let orgX= e.pageX-target.offsetLeft; 
+      let orgY= e.pageY-target.offsetTop;
       this.canMove = true 
-      // e.target.onmouseout = ()=>{
-      //   document.onmousemove = null;
-      //   document.onmouseup = null;
-      // }
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
               
               if(this.canMove){
-                console.log('mouse:'+orgX+'-'+orgY)
-                  let left = target.offsetLeft +Math.round( ( e.pageX - orgX ) / 10 ) * 10;  
-                  let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
-                  console.log(left+'--'+top)
+                // console.log('mouse:'+orgX+'-'+orgY)
+                  // let left = target.offsetLeft +Math.round( ( e.pageX - orgX ) / 10 ) * 10;  
+                  // let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
+                  // console.log(orgX+'--'+orgY+'---'+left+'--'+top)
                   //移动当前元素
-                  target.style.left = left + 'px';
-                  target.style.top = top + 'px';
+                  target.style.left = (e.pageX-orgX)/uiBox.offsetWidth*100 + '%';
+                  target.style.top = (e.pageY-orgY)/uiBox.offsetHeight*100 + '%';
               }
           };
         document.onmouseup = (e) => {
+          document.onmousemove = null
           this.canMove = false
         };
       // console.log(uiBox.offsetLeft)
@@ -410,6 +432,7 @@ export default {
     margin: 0 auto;
     overflow: scroll;
     background-size: cover !important;
+    position: relative;
   }
   .PC{
     width: 960px;
@@ -474,5 +497,26 @@ export default {
     display: block;
     width: 100%;
     height: 100%;
+  }
+  .subCommond{
+    display:none;
+    position:absolute;
+    top:20%;
+    left:50%;
+    width:30%;
+    height:20%;
+    margin-left:-15%;
+    background:rgb(226, 221, 221);
+    text-align:center;
+    padding:15px;
+  }
+  .subCommond a{
+    position:absolute;
+    top:0;
+    right:0;
+    cursor:pointer;  
+  }
+  .commondInput{
+    float: right;
   }
 </style>

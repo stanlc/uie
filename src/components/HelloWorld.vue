@@ -34,12 +34,12 @@
         <!-- 测试窗口 -->
 
         <!-- 配置界面 -->
-        <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative`">
-            
+        <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`">
+            <div>
                 <div
                 v-for="(element,index) in form" 
                 :key="element.id"
-                style="display:inline"
+                style="display:inline;height:100%"
                 @mousedown="move"
                 >
                 <!-- 只有一种指令，默认为按钮 -->
@@ -64,7 +64,8 @@
                           <div v-for="item in element.obj" :key="item.param_key">
                             <span style="float:left">{{item.param_name}}:</span>
                             <div class="commondInput">
-                              <input :name="item.param_key" autocomplete="off"/>
+                              <div class="paramReadme">{{item.param_readme}}</div>
+                              <input :name="item.param_key" autocomplete="off" />
                             </div>
                           </div>
                         </form>
@@ -81,6 +82,7 @@
 
               
                 </div>
+            </div>
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
                   <input id="product_id" :data-code="cmdCode">
@@ -124,6 +126,9 @@
                 </el-form-item>
                 <el-form-item label="组件宽度"> 
                    <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="5"></el-input-number>
+                </el-form-item>
+                <el-form-item label="组件高度"> 
+                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="5" :max="100" :step="5"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件内边距"> 
                    <el-input v-model="WgPadding" @change="PaddingChange"></el-input>
@@ -177,11 +182,13 @@ export default {
       selectWgInfo:'请选择组件',
       list:[1,2,3,4],
       WgWidth:10,
+      WgHeight:10,
       rawHtml:'',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       btnStyle:{
         width:'15%',
+        height:'10%',
         padding:'5px',
         margin:'5px 0 0 5px',
         background:'#78bdf3',
@@ -191,7 +198,8 @@ export default {
         cursor:'pointer',
         transition:'width ease-in 0.5s,height ease-in 0.5s',
         'background-size':'cover',
-        position:'relative'
+        position:'relative',
+        '-webkit-appearance':'button',
       },
       pageData:{
         title:'测试',
@@ -199,7 +207,8 @@ export default {
         wgList:[],
         size:''
       },
-      showText:true,         
+      showText:true, 
+      brothersinfo:[],        
     }
   },
   computed:{
@@ -273,6 +282,7 @@ export default {
         this.selectIndex = e.target.getAttribute('data-index')
         this.selectWgInfo = this.form[this.selectIndex].name
         this.WgWidth = this.form[this.selectIndex].btnStyle.width.replace(/%/g,"")
+        this.WgHeight = this.form[this.selectIndex].btnStyle.height.replace(/%/g,"")
         this.WgPadding = this.form[this.selectIndex].btnStyle.padding
         this.WgMargin = this.form[this.selectIndex].btnStyle.margin
       }
@@ -314,6 +324,11 @@ export default {
     WidthChange(){
       if(this.selectWg.style){
         this.form[this.selectIndex].btnStyle.width=this.WgWidth+'%'
+      }
+    },
+    HeightChange(){
+      if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle.height=this.WgHeight+'%'
       }
     },
     PaddingChange(){
@@ -382,14 +397,26 @@ export default {
       let orgY= e.pageY;
       let curX = target.style.left?target.style.left:'0'
       let curY = target.style.top?target.style.top:'0'
+      let that = this
+      // let childs=target.parentNode.parentNode.children
+      //             let brothers=[]
+      //             for(let i=0;i<childs.length;i++){
+      //                 if(childs[i]!==target.parentNode)
+      //                     brothers.push(childs[i])
+      //             }
+      //             console.log(brothers)
+      //             this.brothersinfo = []
+      //             brothers.forEach(function(item){
+      //                 that.brothersinfo.push({'left':item.offsetLeft/uiBox.offsetWidth*100+'%','top':item.offsetTop/uiBox.offsetHeight*100+'%','text':item.innerText})
+      //             })
+      //             console.log(this.brothersinfo)
       this.canMove = true 
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
               
               if(this.canMove){
-                  // let left = target.offsetLeft +Math.round( ( e.pageX - orgX ) / 10 ) * 10;  
-                  // let top = target.offsetTop +Math.round( ( e.pageY - orgY ) / 10 ) * 10;  
-                  // console.log(orgX+'--'+orgY+'---'+left+'--'+top)
+                  //获取兄弟节点的top,left,width(400),height(300)  
+                  target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
                   target.style.position = 'absolute'
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
@@ -401,7 +428,7 @@ export default {
                   if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
                   target.style.left =x + '%';
                   target.style.top =y + '%';
-                  console.log(x+'-'+y)
+                  
               }
           };
         document.onmouseup = (e) => {
@@ -416,6 +443,9 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+  html,body{
+    height: 100%;
+  }
   .clearfix::after{
     content:'';
     display: block;
@@ -528,5 +558,8 @@ export default {
   }
   .commondInput{
     float: right;
+  }
+  .paramReadme{
+    display: none;
   }
 </style>

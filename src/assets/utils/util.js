@@ -27,7 +27,7 @@ export default{
         </div>
         `+`<div id="app">
             <div id="nickName" >
-                <span>别名：</span><input v-model="nickName"/>
+                <span>别名：</span><textarea v-model="nickName"></textarea>
                 <button @click="changeNickName">确认</button>
             </div>`+e+`</div>`+
         `</body>
@@ -36,7 +36,7 @@ export default{
         <script src="https://cdn.jsdelivr.net/npm/vue"></script>
         <!-- import JavaScript -->
         <script src="https://cdn.jsdelivr.net/npm/element-ui@2.13.0/lib/index.js"></script>
-      
+        
         <script>
         var FLAG = "false";
         getCmdParams = function(thisDom){
@@ -178,28 +178,69 @@ export default{
                 curIndex:0,
                 nickName:'',
                 form:[],
+                nickNameList:[]
             }
         },
+        created(){
+            
+        },
         mounted(){
-            this.upadateNickName()
+            
+            this.getNickName()
         },
         methods:{
+            //获取别名
+            getNickName(){
+                let s = $("#serial_num").val()
+                $.ajax({
+                    url: '/uiTemplate//getRemark?serialNum='+s,
+                    async: true,
+                    dataType: "json",
+                    contentType: "application/json",
+                    type: "get",
+                    success: function (data) {
+                        myVue.form = JSON.parse(data.resultContent)
+                        setTimeout(()=>{myVue.upadateNickName()},100) 
+                    }
+                })  
+                
+            },
             //设置按钮的别名
             changeNickName(){
                 this.curIndex = window.curIndex
                 this.form[this.curIndex]=this.nickName
                 this.upadateNickName()
+                $.ajax({
+                            url: '/uiTemplate//saveRemark',
+                            data: JSON.stringify({
+                                serialNum:$("#serial_num").val(),
+                                remark:JSON.stringify(this.form)
+                            }),
+                            async: true,
+                            dataType: "json",
+                            contentType: "application/json",
+                            type: "post",
+                            success: function (data) {
+                                if (data.code === 0||data.code === "0") {
+                                    msg("保存成功");
+                                } else {
+                                    msg("保存失败")
+                                }
+                            }
+                        })
             },
             //更新别名
             upadateNickName() {
+                
                 let arr = [...document.getElementsByClassName('parentBtn')]
                 arr.map((item,index)=>{
                     this.form.map((e,i)=>{
                         if(index===i){
-                            item.innerHTML = e.length>0?e:item.innerHTML
+                            item.innerHTML = e?e:item.innerHTML
                         }
                     })
                 })
+                
                 $('#nickName').fadeOut(500)
                 this.nickName=''
                 
@@ -231,6 +272,9 @@ export default{
             top:0;
             right:0;
             cursor:pointer;  
+          }
+          .paramReadme{
+            display: none;
           }
     </style>
     </html>`

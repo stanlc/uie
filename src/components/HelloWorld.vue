@@ -36,7 +36,7 @@
         <!-- 配置界面 -->
         <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`">
             <div class="grid" :class="pagetype"></div>
-            <div>
+            <div id="wgBox">
                 <div
                 v-for="(element,index) in form" 
                 :key="element.id"
@@ -58,7 +58,7 @@
                 <!-- 有多种指令 -->
                 <template v-else>
                     <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" ontouchstart="holdDown(event)" ontouchend="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
-                    <div :id="element.id" class="subCommond">
+                    <div :id="element.id" class="subCommond" >
                     <a :tonclick="`$('#${element.id}').hide()`">X</a>
                       <div style="margin:0 auto" >
                         <form  :id="element.cmdName" >
@@ -119,17 +119,24 @@
                     @change="changeText">
                   </el-switch>
                 </el-form-item>
+              </el-form>
+              <el-form :inline="true">
                 <el-form-item label="文字颜色">
                   <el-color-picker v-model="textColor" @change="colorPick"></el-color-picker>
                 </el-form-item>
+                <el-form-item label="按钮颜色">
+                  <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
+                </el-form-item>
+              </el-form>
+              <el-form>
                 <el-form-item label="按钮图标">
                    <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
                 </el-form-item>
                 <el-form-item label="组件宽度"> 
-                   <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="5"></el-input-number>
+                   <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件高度"> 
-                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="5" :max="100" :step="5"></el-input-number>
+                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="5" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件内边距"> 
                    <el-input v-model="WgPadding" @change="PaddingChange"></el-input>
@@ -142,7 +149,18 @@
                 </el-form-item>
               </el-form>
             </el-tab-pane>
-            <el-tab-pane label="高级" name="third">高级</el-tab-pane>
+            <el-tab-pane label="高级" name="third">
+              <el-form>
+                <el-form-item label="显示网格">
+                    <el-switch
+                      v-model="showGrid"
+                      active-color="#13ce66"
+                      inactive-color="#ff4949"
+                      @change="changeGrid">
+                    </el-switch>
+                </el-form-item>
+              </el-form>
+            </el-tab-pane>
           </el-tabs>
         </div>
       </div>
@@ -178,8 +196,10 @@ export default {
       btnImg:'',
       canMove : false,
       textColor:'#fff',
+      btnColor:'#78bdf3',
       pageflag:true,
       testShow:false,
+      showGrid:false,
       selectWgInfo:'请选择组件',
       list:[1,2,3,4],
       WgWidth:10,
@@ -226,6 +246,7 @@ export default {
     },
   },
   mounted(){
+    this.getTeamplate();
     this.getCmdObject();
     this.getimg();
     this.getBtnImg();
@@ -233,6 +254,22 @@ export default {
   methods: {
     handleClick(tab, event) {
         // console.log(tab, event);
+    },
+    //获取已保存模板
+    getTeamplate(){
+      this.$http.get('/uiTemplate/getRawHtml',{
+        params:{
+          productCode:this.cmdCode,
+          type:this.pageflag?'pc':'mobile'
+        }
+      }).then(res=>{
+        if(res.data!==null){
+          this.form= res.data.form
+          this.bcImg = res.data.bcImg
+          // document.getElementById('uiBox').innerHTML = res.data
+        }
+        
+      })
     },
     //获取指令信息
     getCmdObject(){
@@ -308,8 +345,8 @@ export default {
       this.gethtml()
       let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
       let html = util.exportHtml(this.rawHtml,this.bcImg)
-      console.log(html)
-      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml,type:this.pageflag?'pc':'mobile'}).then(res=>{
+      // console.log(html)
+      this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:JSON.stringify({form:this.form,bcImg:this.bcImg}),type:this.pageflag?'pc':'mobile'}).then(res=>{
         if(res.data.resultDesc==='OK'){
           this.$message({
             type:'success',
@@ -348,9 +385,21 @@ export default {
         this.form[this.selectIndex].btnStyle.color = e?'rgba(255,255,255,1)':'rgba(0,0,0,0)'
       }
     },
+    changeGrid(){
+      if(this.showGrid){
+        $('.grid').show()
+      }else{
+        $('.grid').hide()
+      }
+    },
     colorPick(e){
       if(this.selectWg.style){
         this.form[this.selectIndex].btnStyle.color = e
+      }
+    },
+    colorBtnPick(e){
+      if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle.background = e
       }
     },
     remove(){
@@ -414,28 +463,38 @@ export default {
       this.canMove = true 
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
-              $('.grid').show()
+              
               if(this.canMove){
                   //获取兄弟节点的top,left,width(400),height(300)  
                   // target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
-                  target.style.position = 'absolute'
+                  
+                   target.style.position = 'absolute'
+                  
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let a = 10/uiBox.offsetWidth*100
                   let b = 10/uiBox.offsetHeight*100
-                  let x = parseInt(curX)  + Math.ceil( ( e.pageX - orgX )/uiBox.offsetWidth*100/a)*a
+                  let x = parseInt(curX)  + ( e.pageX - orgX )/uiBox.offsetWidth*100
                   if(x>xBoundary){x=100}else if(x<0){x=0}
-                  let y = parseInt(curY) + Math.ceil( ( e.pageY - orgY )/uiBox.offsetHeight*100/b)*b
+                  let y = parseInt(curY) + ( e.pageY - orgY )/uiBox.offsetHeight*100
                   if(y>yBoundary){y=100}else if(y<0){y=0}
+                  
                   target.style.left =x + '%';
-                  target.style.top =y + '%';
+                  
+                   target.style.top =y + '%';
+                 if(target.getAttribute('data-index')){
+                    let index = target.getAttribute('data-index')
+                    this.form[index].btnStyle.position = 'absolute'
+                    this.form[index].btnStyle.left = x +'%'
+                     this.form[index].btnStyle.top = y +'%'
+                  }
                   
               }
           };
         document.onmouseup = (e) => {
           document.onmousemove = null
-          $('.grid').hide()
+         
           this.canMove = false
         };
       // console.log(uiBox.offsetLeft)
@@ -481,6 +540,7 @@ export default {
     height: 667px;
     background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%) ;
     background-size: 10px 10px;
+    position: absolute;
     display: none;
   }
   .Pc{
@@ -492,6 +552,7 @@ export default {
     width: 20%;
     height: 90vh;
     padding: 10px;
+    overflow: scroll;
   }
   .topBtn{
     padding: 5px;

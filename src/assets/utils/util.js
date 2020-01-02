@@ -1,6 +1,6 @@
 
 export default{
-    exportHtml(e){
+    exportHtml(e,bc){
         return `<!DOCTYPE html>
         <html>
         
@@ -10,7 +10,8 @@ export default{
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.13.0/lib/theme-chalk/index.css">
             <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
         </head>
-        <body>
+        <body style="background:url(${bc});background-size:100%;background-repeat:no-repeat;"
+        >
         <div id="msgBox" style="width: 300px;
             height: 100px;
             position: absolute;
@@ -26,9 +27,12 @@ export default{
             <p style="margin:0 auto;" class="msg">msg</p>
         </div>
         `+`<div id="app">
-            <div id="nickName" >
-                <span>别名：</span><textarea v-model="nickName"></textarea>
-                <button @click="changeNickName">确认</button>
+            <div id="nickName" class="modal" @click="if($event.target.id==='nickName'){$('#nickName').fadeOut(500);
+            nickName=''}">
+                <div>    
+                    <span>别名：</span><input v-model="nickName"/>
+                    <button @click="changeNickName">确认</button>
+                </div>
             </div>`+e+`</div>`+
         `</body>
 
@@ -135,9 +139,10 @@ export default{
         
         // 长按修改别名方法
         var loop = 1
+        var flag2 = true
         holdDown = function (e)//鼠标按下时触发
         {
-            
+            flag2 = false
             curIndex = e.target.getAttribute('data-index')
             time=setInterval(function()
                 {
@@ -251,9 +256,7 @@ export default{
     <style>
           #nickName{
               display: none;
-              position: absolute;
-              top: 10%;
-              left: 50%;
+              
           }
           .subCommond{
             display:none;
@@ -275,6 +278,18 @@ export default{
           }
           .paramReadme{
             display: none;
+          }
+          .modal{
+              width:100vw;
+              height:100vh;
+              background:rgba(0,0,0,0.5);
+              position: absolute;
+              z-index:2;
+          }
+          .modal div{
+              display:flex;
+              justify-content:center;
+              margin:30% auto;
           }
     </style>
     </html>`

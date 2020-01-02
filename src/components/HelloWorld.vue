@@ -9,7 +9,7 @@
             <el-button type="text" class="topBtn" @click="form=[]">重置</el-button>
         </div>
         <div style="float:right">
-            <el-button type="text" class="topBtn" @click="pageflag=!pageflag">{{pagetype}}</el-button>
+            <el-button type="text" class="topBtn" @click="pageflag=!pageflag;getTeamplate()">{{pagetype}}</el-button>
             <el-button type="text" class="topBtn" @click="showTest">预览</el-button>
             <el-button type="text" class="topBtn" @click="exportHtml">保存</el-button>
             <!-- <el-button type="text" class="topBtn">关闭</el-button> -->

@@ -35,6 +35,7 @@
 
         <!-- 配置界面 -->
         <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`">
+            <div class="grid" :class="pagetype"></div>
             <div>
                 <div
                 v-for="(element,index) in form" 
@@ -188,9 +189,8 @@ export default {
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       btnStyle:{
         width:'15%',
-        height:'10%',
+        height:'5%',
         padding:'5px',
-        margin:'5px 0 0 5px',
         background:'#78bdf3',
         border:'none',
         'border-radius':'5px',
@@ -307,8 +307,8 @@ export default {
     exportHtml(){
       this.gethtml()
       let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
-      let html = util.exportHtml(this.rawHtml,size)
-      //console.log(html)
+      let html = util.exportHtml(this.rawHtml,this.bcImg)
+      console.log(html)
       this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:this.rawHtml,type:this.pageflag?'pc':'mobile'}).then(res=>{
         if(res.data.resultDesc==='OK'){
           this.$message({
@@ -328,6 +328,7 @@ export default {
     },
     HeightChange(){
       if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle.position = 'absolute'
         this.form[this.selectIndex].btnStyle.height=this.WgHeight+'%'
       }
     },
@@ -413,19 +414,20 @@ export default {
       this.canMove = true 
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
-              
+              $('.grid').show()
               if(this.canMove){
                   //获取兄弟节点的top,left,width(400),height(300)  
-                  target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
+                  // target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
                   target.style.position = 'absolute'
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
-                  let x = parseInt(curX.replace(/%/g,""))  + (e.pageX-orgX)/uiBox.offsetWidth*100
-                  if(x>xBoundary){x=xBoundary}else if(x<0){x=0}
-                  
-                  let y = parseInt(curY.replace(/%/g,"")) + (e.pageY-orgY)/uiBox.offsetHeight*100
-                  if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
+                  let a = 10/uiBox.offsetWidth*100
+                  let b = 10/uiBox.offsetHeight*100
+                  let x = parseInt(curX)  + Math.ceil( ( e.pageX - orgX )/uiBox.offsetWidth*100/a)*a
+                  if(x>xBoundary){x=100}else if(x<0){x=0}
+                  let y = parseInt(curY) + Math.ceil( ( e.pageY - orgY )/uiBox.offsetHeight*100/b)*b
+                  if(y>yBoundary){y=100}else if(y<0){y=0}
                   target.style.left =x + '%';
                   target.style.top =y + '%';
                   
@@ -433,6 +435,7 @@ export default {
           };
         document.onmouseup = (e) => {
           document.onmousemove = null
+          $('.grid').hide()
           this.canMove = false
         };
       // console.log(uiBox.offsetLeft)
@@ -472,7 +475,13 @@ export default {
     overflow: scroll;
     background-size: cover !important;
     position: relative;
-    
+  }
+  .grid{
+    width: 375px;
+    height: 667px;
+    background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%) ;
+    background-size: 10px 10px;
+    display: none;
   }
   .Pc{
     width: 960px;

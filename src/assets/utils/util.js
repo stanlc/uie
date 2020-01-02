@@ -221,7 +221,7 @@ export default{
                             contentType: "application/json",
                             type: "post",
                             success: function (data) {
-                                if (data.code === 0||data.code === "0") {
+                                if (data.resultCode === '1') {
                                     msg("保存成功");
                                 } else {
                                     msg("保存失败")

@@ -45,7 +45,6 @@
                 >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
-                
                 tonmousedown="holdDown(event)" 
                 tonmouseup="holdUp(event)"
                 :data-cmdName="element.cmdName"
@@ -128,15 +127,24 @@
                   <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
                 </el-form-item>
               </el-form>
-              <el-form>
-                <el-form-item label="按钮图标">
+              <el-form :inline="true">
+                  <el-form-item label="按钮图标">
                    <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
-                </el-form-item>
+                  </el-form-item>
+                  <!-- <el-form-item label="按钮背景">
+                   <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
+                  </el-form-item> -->
+              </el-form>
+              <el-form>
+                
                 <el-form-item label="组件宽度"> 
                    <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件高度"> 
                    <el-input-number v-model="WgHeight" @change="HeightChange" :min="5" :max="100" :step="1"></el-input-number>
+                </el-form-item>
+                <el-form-item label="按钮圆角"> 
+                   <el-input-number v-model="WgBorderRadius" @change="RadiusChange" :min="0" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件内边距"> 
                    <el-input v-model="WgPadding" @change="PaddingChange"></el-input>
@@ -183,8 +191,7 @@ export default {
   data() {
     return {
       activeName: 'second',
-      form:[
-      ],
+      form:[],
       cmdList:[],
       bcImgList:[],
       btnImgList:[],
@@ -205,17 +212,21 @@ export default {
       WgWidth:10,
       WgHeight:10,
       rawHtml:'',
+      WgBorderRadius:'5',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       btnStyle:{
         width:'15%',
         height:'5%',
         padding:'5px',
-        background:'#78bdf3',
+        'background-color':'#78bdf3',
+        'background-image':'',
+        'background-repeat':'no-repeat',
         border:'none',
         'border-radius':'5px',
         color:'#fff',
         cursor:'pointer',
+        'border-radius':'5px',
         transition:'width ease-in 0.5s,height ease-in 0.5s',
         'background-size':'cover',
         position:'relative',
@@ -263,7 +274,7 @@ export default {
           type:this.pageflag?'pc':'mobile'
         }
       }).then(res=>{
-        if(res.data!==null){
+        if(res.data!=='无保存模板'){
           this.form= res.data.form
           this.bcImg = res.data.bcImg
           // document.getElementById('uiBox').innerHTML = res.data
@@ -322,6 +333,13 @@ export default {
         this.WgHeight = this.form[this.selectIndex].btnStyle.height.replace(/%/g,"")
         this.WgPadding = this.form[this.selectIndex].btnStyle.padding
         this.WgMargin = this.form[this.selectIndex].btnStyle.margin
+        this.showText = this.form[this.selectIndex].btnStyle.color!=='rgba(0,0,0,0)'
+        this.textColor = this.form[this.selectIndex].btnStyle.color
+        this.WgBorderRadius =parseInt(this.form[this.selectIndex].btnStyle['border-radius']) 
+        this.btnColor =  this.form[this.selectIndex].btnStyle['background-color']
+        let btnImg = this.form[this.selectIndex].btnStyle['background-image'].replace(/url[(]/g,"").replace(')',"")
+        this.selectedBtnImg = btnImg.length>1?btnImg:''
+        
       }
     },
     gethtml(){
@@ -369,6 +387,11 @@ export default {
         this.form[this.selectIndex].btnStyle.height=this.WgHeight+'%'
       }
     },
+    RadiusChange(){
+      if(this.selectWg.style){
+        this.form[this.selectIndex].btnStyle['border-radius']=this.WgBorderRadius+'px'
+      }
+    },
     PaddingChange(){
       if(this.selectWg.style){
         this.form[this.selectIndex].btnStyle.padding = this.WgPadding
@@ -399,7 +422,7 @@ export default {
     },
     colorBtnPick(e){
       if(this.selectWg.style){
-        this.form[this.selectIndex].btnStyle.background = e
+        this.form[this.selectIndex].btnStyle['background-color'] = e
       }
     },
     remove(){
@@ -433,9 +456,9 @@ export default {
       }
       if(this.selectWgInfo!=='请选择组件'){
         if(e.resource_data){
-          this.selectWg.style['background-image']=`url(${e.resource_data})`
+          this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
         }else{
-          this.selectWg.style.background = '#78bdf3'
+          this.form[this.selectIndex].btnStyle['background-image'] = ''
         }
       }
     },
@@ -445,8 +468,10 @@ export default {
       let target = e.target
       let orgX= e.pageX; 
       let orgY= e.pageY;
-      let curX = target.style.left?target.style.left:'0'
-      let curY = target.style.top?target.style.top:'0'
+      let oriX = target.offsetLeft/uiBox.offsetWidth*100 + '%' 
+      let oriY = target.offsetTop/uiBox.offsetHeight*100 + '%' 
+      let curX = target.style.left?target.style.left:oriX
+      let curY = target.style.top?target.style.top:oriY
       let that = this
       // let childs=target.parentNode.parentNode.children
       //             let brothers=[]
@@ -472,13 +497,14 @@ export default {
                    target.style.position = 'absolute'
                   
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
+                  console.log(xBoundary)
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let a = 10/uiBox.offsetWidth*100
                   let b = 10/uiBox.offsetHeight*100
                   let x = parseInt(curX)  + ( e.pageX - orgX )/uiBox.offsetWidth*100
-                  if(x>xBoundary){x=100}else if(x<0){x=0}
+                  if(x>xBoundary){x=xBoundary}else if(x<0){x=0}
                   let y = parseInt(curY) + ( e.pageY - orgY )/uiBox.offsetHeight*100
-                  if(y>yBoundary){y=100}else if(y<0){y=0}
+                  if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
                   
                   target.style.left =x + '%';
                   

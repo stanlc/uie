@@ -9,7 +9,18 @@
             <el-button type="text" class="topBtn" @click="form=[]">重置</el-button>
         </div>
         <div style="float:right">
-            <el-button type="text" class="topBtn" @click="pageflag=!pageflag;getTeamplate()">{{pagetype}}</el-button>
+            <el-dialog
+              title="提示"
+              :visible.sync="dialogVisible"
+              width="30%"
+              >
+              <span>切换前请先保存</span>
+              <span slot="footer" class="dialog-footer">
+                <el-button @click="dialogVisible = false">取 消</el-button>
+                <el-button type="primary" @click="dialogVisible = false;pageflag=!pageflag;getTeamplate()">确 定</el-button>
+              </span>
+            </el-dialog>
+            <el-button type="text" class="topBtn" @click="dialogVisible=true">{{pagetype}}</el-button>
             <el-button type="text" class="topBtn" @click="showTest">预览</el-button>
             <el-button type="text" class="topBtn" @click="exportHtml">保存</el-button>
             <!-- <el-button type="text" class="topBtn">关闭</el-button> -->
@@ -73,7 +84,7 @@
                           :tonclick="`$('#${element.id}').hide();`+'commonSend(event);'"
                           :data-cmdName="element.cmdName"
                           :data-id="element.cmdName"
-                          :style="element.btnStyle"
+                          :style="subBtnStyle"
                           class="sendControlBtn"
                           >发送</button>
                       </div>
@@ -86,7 +97,7 @@
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
                   <input id="product_id" :data-code="cmdCode">
-                  <input id="serial_num" value='000d6f000cf65257'>
+                  <input id="serial_num" value='0' >
                   <input id="url" value='/device/deviceControlBySerialNum'>
                   <input id="account" value='C28000'>
                   <input id="token" value='11111111'>
@@ -202,6 +213,7 @@ export default {
       bcImg:'',
       btnImg:'',
       canMove : false,
+      dialogVisible:false,
       textColor:'#fff',
       btnColor:'#78bdf3',
       pageflag:true,
@@ -232,11 +244,12 @@ export default {
         position:'relative',
         '-webkit-appearance':'button',
       },
+      subBtnStyle:'',
       pageData:{
         title:'测试',
         bcImg:'0',
         wgList:[],
-        size:''
+        size:{}
       },
       showText:true, 
       brothersinfo:[],        
@@ -244,7 +257,7 @@ export default {
   },
   computed:{
     pagetype(){
-      return this.pageflag===true?'Pc':'Mobile'
+      return this.pageflag?'Pc':'Mobile'
     },
     cmdCode(){
       if(sessionStorage.getItem('productCode')){
@@ -257,6 +270,7 @@ export default {
     },
   },
   mounted(){
+    this.subBtnStyle = Object.assign({},this.btnStyle)
     this.getTeamplate();
     this.getCmdObject();
     this.getimg();
@@ -361,8 +375,8 @@ export default {
     },
     exportHtml(){
       this.gethtml()
-      let size = this.pagetype==='PC'?'width:100vw;height:100vh;':'width:750px;height:1334px;'
-      let html = util.exportHtml(this.rawHtml,this.bcImg)
+      let size = this.pagetype==='Pc'?'width:100vw;height:100vh;':'width:375px;height:667px;'
+      let html = util.exportHtml(this.rawHtml,this.bcImg,size)
       // console.log(html)
       this.$http.post('/uiTemplate/save',{data:html,productCode:this.cmdCode,rawHtml:JSON.stringify({form:this.form,bcImg:this.bcImg}),type:this.pageflag?'pc':'mobile'}).then(res=>{
         if(res.data.resultDesc==='OK'){
@@ -494,10 +508,9 @@ export default {
                   // target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
                   
-                   target.style.position = 'absolute'
+                  target.style.position = 'absolute'
                   
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
-                  console.log(xBoundary)
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let a = 10/uiBox.offsetWidth*100
                   let b = 10/uiBox.offsetHeight*100
@@ -637,6 +650,7 @@ export default {
   .subCommond{
     display:none;
     position:absolute;
+    z-index: 9;
     top:20%;
     left:50%;
     width:30%;

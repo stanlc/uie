@@ -1,6 +1,6 @@
 
 export default{
-    exportHtml(e,bc){
+    exportHtml(e,bc,size){
         return `<!DOCTYPE html>
         <html>
         
@@ -10,7 +10,8 @@ export default{
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.13.0/lib/theme-chalk/index.css">
             <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
         </head>
-        <body style="background:url(${bc});background-size:100%;background-repeat:no-repeat;"
+        <body>
+        <div style="background:url(${bc});background-size:cover;background-repeat:no-repeat;${size};position:relative"
         >
         <div id="msgBox" style="width: 300px;
             height: 100px;
@@ -34,7 +35,8 @@ export default{
                     <button @click="changeNickName">确认</button>
                 </div>
             </div>`+e+`</div>`+
-        `</body>
+        `</div>
+        </body>
 
         <!-- import Vue before Element -->
         <script src="https://cdn.jsdelivr.net/npm/vue"></script>
@@ -115,6 +117,7 @@ export default{
             $("#serial_num").val(json.serial_num);
             $("#url").val(json.url);
             $("#account").val(json.account);
+            myVue.getNickName();
         }
         $.fn.serializeObject = function () {
             var o = {};
@@ -183,15 +186,15 @@ export default{
                 curIndex:0,
                 nickName:'',
                 form:[],
-                nickNameList:[]
+                nickNameList:[],
+                serialNum:'0',
             }
         },
         created(){
             
         },
         mounted(){
-            
-            this.getNickName()
+           
         },
         methods:{
             //获取别名
@@ -204,8 +207,11 @@ export default{
                     contentType: "application/json",
                     type: "get",
                     success: function (data) {
-                        myVue.form = JSON.parse(data.resultContent)
-                        setTimeout(()=>{myVue.upadateNickName()},100) 
+                        if(data.resultCode==='1'){
+                            myVue.form = JSON.parse(data.resultContent)
+                            setTimeout(()=>{myVue.upadateNickName()},100) 
+                        }
+                        
                     }
                 })  
                 
@@ -261,6 +267,7 @@ export default{
           .subCommond{
             display:none;
             position:absolute;
+             z-index: 9;
             top:20%;
             left:50%;
             width:30%;

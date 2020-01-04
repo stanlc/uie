@@ -170,7 +170,8 @@ export default{
                 }else{
                     $('#nickName').hide()
                     $('.subCommond').hide()
-                    $('#'+id).show()
+                     $('#'+id).show()
+                     myVue.subDialogVisible = true
                 }
                
             }
@@ -188,6 +189,7 @@ export default{
                 form:[],
                 nickNameList:[],
                 serialNum:'0',
+                subDialogVisible:false
             }
         },
         created(){
@@ -266,22 +268,28 @@ export default{
           }
           .subCommond{
             display:none;
-            position:absolute;
-             z-index: 9;
-            top:20%;
-            left:50%;
-            width:30%;
-            height:20%;
-            margin-left:-15%;
-            background:rgb(226, 221, 221);
+            position:relative;
+            z-index: 9;
             text-align:center;
             padding:15px;
           }
+          .commondBox{
+            background: #fff;
+            padding: 10px;
+            margin: 0 auto;
+          }
+          .subCommond form {
+            margin: 5px 0;
+          }
           .subCommond a{
             position:absolute;
-            top:0;
-            right:0;
+            z-index: 10;
+            top:15px;
+            right:15px;
             cursor:pointer;  
+          }
+          .commondInput{
+            float: right;
           }
           .paramReadme{
             display: none;

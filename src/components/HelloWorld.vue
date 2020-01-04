@@ -69,24 +69,24 @@
                 <template v-else>
                     <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" ontouchstart="holdDown(event)" ontouchend="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
                     <div :id="element.id" class="subCommond" >
-                    <a :tonclick="`$('#${element.id}').hide()`">X</a>
-                      <div style="margin:0 auto" >
-                        <form  :id="element.cmdName" >
-                          <div v-for="item in element.obj" :key="item.param_key">
-                            <span style="float:left">{{item.param_name}}:</span>
-                            <div class="commondInput">
-                              <div class="paramReadme">{{item.param_readme}}</div>
-                              <input :name="item.param_key" autocomplete="off" />
-                            </div>
-                          </div>
-                        </form>
-                        <button
-                          :tonclick="`$('#${element.id}').hide();`+'commonSend(event);'"
-                          :data-cmdName="element.cmdName"
-                          :data-id="element.cmdName"
-                          :style="subBtnStyle"
-                          class="sendControlBtn"
-                          >发送</button>
+                      <a :onclick="`$('#${element.id}').hide();`" icon="el-icon-circle-close">X</a>
+                      <div class="commondBox">
+                        <el-form label-width="80px" >
+                          <el-form-item :label="item.param_name" v-for="item in element.obj" :key="item.param_key">
+                            <el-input v-model="input" :placeholder="item.param_readme" :name="item.param_key"></el-input>
+                          </el-form-item>
+                        </el-form>
+                        <el-form>
+                          <el-form-item>
+                            <el-button
+                              :tonclick="`$('#${element.id}').hide();`+'commonSend(event);'"
+                              :data-cmdName="element.cmdName"
+                              :data-id="element.cmdName"
+                              class="sendControlBtn"
+                              >发送
+                            </el-button>
+                          </el-form-item>
+                        </el-form>
                       </div>
                     </div>
                 </template>
@@ -224,6 +224,7 @@ export default {
       WgWidth:10,
       WgHeight:10,
       rawHtml:'',
+      input:'',
       WgBorderRadius:'5',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
@@ -239,12 +240,25 @@ export default {
         color:'#fff',
         cursor:'pointer',
         'border-radius':'5px',
-        transition:'width ease-in 0.5s,height ease-in 0.5s',
+        transition:'width ease-in 0.5s,height ease-in 0.5s,background-image ease-in 0.5s',
         'background-size':'cover',
+        '-webkit-appearance':'button',
+      },
+      subBtnStyle:{
+        width:'25%',
+        height:'5%',
+        margin:'5px 0',
+        padding:'5px',
+        'background-color':'#78bdf3',
+        'background-repeat':'no-repeat',
+        border:'none',
+        'border-radius':'5px',
+        color:'#fff',
+        cursor:'pointer',
+        'border-radius':'5px',
         position:'relative',
         '-webkit-appearance':'button',
       },
-      subBtnStyle:'',
       pageData:{
         title:'测试',
         bcImg:'0',
@@ -270,7 +284,7 @@ export default {
     },
   },
   mounted(){
-    this.subBtnStyle = Object.assign({},this.btnStyle)
+    // this.subBtnStyle = Object.assign({},this.btnStyle)
     this.getTeamplate();
     this.getCmdObject();
     this.getimg();
@@ -577,7 +591,10 @@ export default {
   .grid{
     width: 375px;
     height: 667px;
-    background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%) ;
+    background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
+                      -moz-linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
+                      linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
+                      -moz-linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%) ;
     background-size: 10px 10px;
     position: absolute;
     display: none;
@@ -649,21 +666,22 @@ export default {
   }
   .subCommond{
     display:none;
-    position:absolute;
+    position:relative;
     z-index: 9;
-    top:20%;
-    left:50%;
-    width:30%;
-    height:20%;
-    margin-left:-15%;
-    background:rgb(226, 221, 221);
     text-align:center;
     padding:15px;
   }
+  .commondBox{
+    background: #fff;
+    padding: 10px;
+    margin: 0 auto;
+  }
+ 
   .subCommond a{
     position:absolute;
-    top:0;
-    right:0;
+    z-index: 10;
+    top:15px;
+    right:15px;
     cursor:pointer;  
   }
   .commondInput{
@@ -671,5 +689,12 @@ export default {
   }
   .paramReadme{
     display: none;
+  }
+  .clearfix:after{
+    content:"\20";
+    display: block;
+    height: 0;
+    clear: both;
+    zoom:1;
   }
 </style>

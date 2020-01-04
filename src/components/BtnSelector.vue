@@ -17,14 +17,21 @@
       :native="false"
       :noresize="false">
       <!-- 图标项 -->
-      <div
-        class="icon-item"
-        v-for="item in options"
-        :key="item.id"
-        :class="{ 'is-active': isActive(item) }"
-        @click="onClickSelected(item)">
-        <img :src="item.resource_data" style="width:40px;height:40px;"/>
-      </div>
+      <el-tooltip 
+          v-for="item in options"
+          :key="item.id"
+          effect="dark" 
+          :content="item.resource_name" 
+          placement="top-start">
+        <div
+          class="icon-item"
+          :class="{ 'is-active': isActive(item) }"
+          @click="onClickSelected(item)">
+          <img :src="item.resource_data" style="width:40px;height:40px;"/>
+        </div>
+        
+      </el-tooltip>
+      
     </el-scrollbar>
     <!-- 页面显示内容区 -->
     <template slot="reference">
@@ -194,8 +201,7 @@ export default {
     padding: 0;
     width: ($size + $scope * 2) * $col-count + 2px;
     height: ($size + $scope * 2) * $row-count;
-
-    > .el-scrollbar { height: 100%; }
+    > .el-scrollbar { height: 300px !important; }
     
 
     .icon-item {

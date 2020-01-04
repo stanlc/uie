@@ -45,6 +45,7 @@
         <!-- 测试窗口 -->
 
         <!-- 配置界面 -->
+        
         <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`">
             <div class="grid" :class="pagetype"></div>
             <div id="wgBox">
@@ -71,22 +72,19 @@
                     <div :id="element.id" class="subCommond" >
                       <a :onclick="`$('#${element.id}').hide();`" icon="el-icon-circle-close">X</a>
                       <div class="commondBox">
-                        <el-form label-width="80px" >
+                        <el-form label-width="80px" :id="element.cmdName">
                           <el-form-item :label="item.param_name" v-for="item in element.obj" :key="item.param_key">
                             <el-input v-model="input" :placeholder="item.param_readme" :name="item.param_key"></el-input>
                           </el-form-item>
                         </el-form>
-                        <el-form>
-                          <el-form-item>
-                            <el-button
+                            <button
                               :tonclick="`$('#${element.id}').hide();`+'commonSend(event);'"
                               :data-cmdName="element.cmdName"
                               :data-id="element.cmdName"
+                              :style="subBtnStyle"
                               class="sendControlBtn"
                               >发送
-                            </el-button>
-                          </el-form-item>
-                        </el-form>
+                            </button>
                       </div>
                     </div>
                 </template>
@@ -152,19 +150,19 @@
                    <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="组件高度"> 
-                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="5" :max="100" :step="1"></el-input-number>
+                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="1" :max="100" :step="1"></el-input-number>
                 </el-form-item>
                 <el-form-item label="按钮圆角"> 
                    <el-input-number v-model="WgBorderRadius" @change="RadiusChange" :min="0" :max="100" :step="1"></el-input-number>
                 </el-form-item>
-                <el-form-item label="组件内边距"> 
+                <!-- <el-form-item label="组件内边距"> 
                    <el-input v-model="WgPadding" @change="PaddingChange"></el-input>
-                </el-form-item>
-                <el-form-item label="组件外边距"> 
+                </el-form-item> -->
+                <!-- <el-form-item label="组件外边距"> 
                    <el-input v-model="WgMargin" @change="MarginChange"></el-input>
-                </el-form-item>
+                </el-form-item> -->
                 <el-form-item>
-                  <el-button @click="remove">删除</el-button>
+                  <el-button @click="remove" type="danger" :disabled="canDel">删除</el-button>
                 </el-form-item>
               </el-form>
             </el-tab-pane>
@@ -219,6 +217,7 @@ export default {
       pageflag:true,
       testShow:false,
       showGrid:false,
+      canDel:true, 
       selectWgInfo:'请选择组件',
       list:[1,2,3,4],
       WgWidth:10,
@@ -241,7 +240,7 @@ export default {
         cursor:'pointer',
         'border-radius':'5px',
         transition:'width ease-in 0.5s,height ease-in 0.5s,background-image ease-in 0.5s',
-        'background-size':'cover',
+        'background-size':'cover !important',
         '-webkit-appearance':'button',
       },
       subBtnStyle:{
@@ -266,7 +265,8 @@ export default {
         size:{}
       },
       showText:true, 
-      brothersinfo:[],        
+      brothersinfo:[], 
+            
     }
   },
   computed:{
@@ -355,6 +355,7 @@ export default {
     boxClick(e){
       if(e.target.innerHTML[0]!=='<'){
         this.selectWg=e.target
+        this.canDel = false
         this.selectIndex = e.target.getAttribute('data-index')
         this.selectWgInfo = this.form[this.selectIndex].name
         this.WgWidth = this.form[this.selectIndex].btnStyle.width.replace(/%/g,"")
@@ -367,11 +368,12 @@ export default {
         this.btnColor =  this.form[this.selectIndex].btnStyle['background-color']
         let btnImg = this.form[this.selectIndex].btnStyle['background-image'].replace(/url[(]/g,"").replace(')',"")
         this.selectedBtnImg = btnImg.length>1?btnImg:''
-        
+      }else{
+        this.canDel = true
       }
     },
     gethtml(){
-      let a = document.getElementById('uiBox').innerHTML
+      let a = document.getElementById('uiBox').innerHTML.replace("grid"," ")
       this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/tonmousedown/g, "onmousedown").replace(/tonmouseup/g, "onmouseup").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
       // console.log(this.rawHtml)
     },
@@ -485,6 +487,7 @@ export default {
       if(this.selectWgInfo!=='请选择组件'){
         if(e.resource_data){
           this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
+          this.form[this.selectIndex].btnStyle['background-size'] = 'cover !important'
         }else{
           this.form[this.selectIndex].btnStyle['background-image'] = ''
         }
@@ -528,9 +531,9 @@ export default {
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let a = 10/uiBox.offsetWidth*100
                   let b = 10/uiBox.offsetHeight*100
-                  let x = parseInt(curX)  + ( e.pageX - orgX )/uiBox.offsetWidth*100
+                  let x = parseInt(curX)  + Math.round(( e.pageX - orgX )/uiBox.offsetWidth*100) 
                   if(x>xBoundary){x=xBoundary}else if(x<0){x=0}
-                  let y = parseInt(curY) + ( e.pageY - orgY )/uiBox.offsetHeight*100
+                  let y = parseInt(curY) + Math.round(( e.pageY - orgY )/uiBox.offsetHeight*100) 
                   if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
                   
                   target.style.left =x + '%';
@@ -584,19 +587,16 @@ export default {
     background-color: #fff ;
     transition: all ease-in-out 0.5s;
     margin: 0 auto;
-    overflow: scroll;
+    overflow: hidden;
     background-size: cover !important;
     position: relative;
   }
+  
   .grid{
-    width: 375px;
-    height: 667px;
-    background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
-                      -moz-linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
-                      linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),
-                      -moz-linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%) ;
+    width: 100%;
+    height: 100%;
+    background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%);
     background-size: 10px 10px;
-    position: absolute;
     display: none;
   }
   .Pc{
@@ -666,7 +666,7 @@ export default {
   }
   .subCommond{
     display:none;
-    position:relative;
+    position:absolute;
     z-index: 9;
     text-align:center;
     padding:15px;

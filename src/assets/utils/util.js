@@ -16,6 +16,7 @@ export default{
         <div id="msgBox" style="width: 300px;
             height: 100px;
             position: absolute;
+            z-index:9;
             display:none;
             top: 10%;
             left: 50%;
@@ -45,6 +46,7 @@ export default{
         
         <script>
         var FLAG = "false";
+        var operation = '';
         getCmdParams = function(thisDom){
                 let id = thisDom.getAttribute("data-id")
                 var operation =  thisDom.getAttribute("data-cmdName");
@@ -66,7 +68,7 @@ export default{
                 if(FLAG === "false"){
                     var serial_num = $("#serial_num").val();
                     var product_code = $("#product_id").attr("data-code");
-                    var operation = event.target.getAttribute("data-cmdName");//cmd_name
+                    operation = event.target.getAttribute("data-cmdName");//cmd_name
                     var paramsArray =  $("#"+id).serializeArray();
                     var token = $("#token").val();
                     var url = $("#url").val();
@@ -76,7 +78,7 @@ export default{
                         //做参数验证暂时做非空验证
                         if (this.value == "") {
                             var param_name = $("#" + this.name).parent().prev().text();
-                            msg(param_name + "不能为空", "#" + button.id);
+                            msg("参数不能为空");
                             flag = false;
                             return false;
                         }
@@ -99,7 +101,7 @@ export default{
                             type: "post",
                             success: function (data) {
                                 if (data.code === 0||data.code === "0") {
-                                    msg("操作成功");
+                                    msg("操作成功"+'<br>'+JSON.stringify(data));
                                 } else if (data.code == "-2") {
                                     msg("设备无应答");
                                 } else if (data.code == "AA") {
@@ -268,13 +270,17 @@ export default{
           }
           .subCommond{
             display:none;
-            position:relative;
+            position:absolute;
+            width:98vw;
+            height:90vh;
+            margin-left:-1vw;
             z-index: 9;
             text-align:center;
             padding:15px;
           }
           .commondBox{
             background: #fff;
+            position:relative;
             padding: 10px;
             margin: 0 auto;
           }

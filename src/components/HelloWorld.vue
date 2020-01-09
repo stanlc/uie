@@ -3,9 +3,8 @@
     <div>
       <div class="head clearfix">
         <div style="float:left">
-            <!-- <el-button type="text" class="topBtn" @click="gethtml">预览</el-button>
-            <el-button type="text" class="topBtn">退一步</el-button>
-            <el-button type="text" class="topBtn">进一步</el-button> -->
+            <el-button type="text" class="topBtn" @click="goBack" ref="backBtn">退一步{{stackIndex}}</el-button>
+            <el-button type="text" class="topBtn" @click="goForward">进一步</el-button>
             <el-button type="text" class="topBtn" @click="form=[]">重置</el-button>
         </div>
         <div style="float:right">
@@ -17,7 +16,7 @@
               <span>切换前请先保存</span>
               <span slot="footer" class="dialog-footer">
                 <el-button @click="dialogVisible = false">取 消</el-button>
-                <el-button type="primary" @click="dialogVisible = false;pageflag=!pageflag;getTeamplate()">确 定</el-button>
+                <el-button type="primary" @click="dialogVisible = false;exportHtml();pageflag=!pageflag;getTeamplate();">确 定</el-button>
               </span>
             </el-dialog>
             <el-button type="text" class="topBtn" @click="dialogVisible=true">{{pagetype}}</el-button>
@@ -46,9 +45,9 @@
 
         <!-- 配置界面 -->
         
-        <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`">
+        <div class="uiBox" id="uiBox" @click = "boxClick($event)" :class="pagetype" :style="`background-image:url(${bcImg});position:relative;`" >
             <div class="grid" :class="pagetype"></div>
-            <div id="wgBox">
+            <div class="wgBox" :class="pagetype">
                 <div
                 v-for="(element,index) in form" 
                 :key="element.id"
@@ -92,6 +91,7 @@
               
                 </div>
             </div>
+            
                 <div class="infoBox" v-show="false">
                   <input id="operation" value="test">
                   <input id="product_id" :data-code="cmdCode">
@@ -191,6 +191,7 @@ import draggable from 'vuedraggable'
 import $ from 'jquery'
 import util from '../assets/utils/util'
 import BtnSelector from '../components/BtnSelector'
+import { setTimeout } from 'timers'
 export default {
   name: 'HelloWorld',
   components: {draggable,BtnSelector},
@@ -201,6 +202,9 @@ export default {
     return {
       activeName: 'second',
       form:[],
+      commondStack:[],
+      stackIndex:0,
+      indexFlag:true,
       cmdList:[],
       bcImgList:[],
       btnImgList:[],
@@ -224,7 +228,7 @@ export default {
       WgHeight:10,
       rawHtml:'',
       input:'',
-      WgBorderRadius:'5',
+      WgBorderRadius:'5%',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       btnStyle:{
@@ -239,9 +243,13 @@ export default {
         color:'#fff',
         cursor:'pointer',
         'border-radius':'5px',
-        transition:'width ease-in 0.5s,height ease-in 0.5s,background-image ease-in 0.5s',
+        transition:'width ease-in 0.5s,height ease-in 0.5s',
         'background-size':'cover !important',
         '-webkit-appearance':'button',
+        'z-index': 2,
+        top:'',
+        left:'',
+        position:''
       },
       subBtnStyle:{
         width:'25%',
@@ -266,7 +274,9 @@ export default {
       },
       showText:true, 
       brothersinfo:[], 
-            
+      wgLeft:'',
+      wgTop:'',  
+      moveTarget:{},  
     }
   },
   computed:{
@@ -283,12 +293,27 @@ export default {
       
     },
   },
+  watch:{
+    //监听页面操作，压入操作栈
+    form:{
+      handler(val,oldVal){
+        if(this.indexFlag){
+          //深拷贝后再压入
+          Object.assign([],Object.values(val))
+          let a = JSON.stringify(Object.values(val)) 
+          this.commondStack.push(JSON.parse(a))
+          this.stackIndex = this.commondStack.length-1
+        }
+      },
+      deep: true
+    }
+  },
   mounted(){
     // this.subBtnStyle = Object.assign({},this.btnStyle)
+    this.getBtnImg();
+    this.getimg();
     this.getTeamplate();
     this.getCmdObject();
-    this.getimg();
-    this.getBtnImg();
   },
   methods: {
     handleClick(tab, event) {
@@ -302,9 +327,10 @@ export default {
           type:this.pageflag?'pc':'mobile'
         }
       }).then(res=>{
-        if(res.data!=='无保存模板'){
+        if(res.data.form){
           this.form= res.data.form
           this.bcImg = res.data.bcImg
+          this.$forceUpdate();
           // document.getElementById('uiBox').innerHTML = res.data
         }
         
@@ -373,8 +399,10 @@ export default {
       }
     },
     gethtml(){
-      let a = document.getElementById('uiBox').innerHTML.replace("grid"," ")
-      this.rawHtml = a.replace(/tonclick/g, "onclick").replace(/tonmousedown/g, "onmousedown").replace(/tonmouseup/g, "onmouseup").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
+      this.showGrid = false
+      $('.grid').hide()
+      // let a = document.getElementById('uiBox').innerHTML.replace("grid"," ")
+      this.rawHtml = document.getElementById('uiBox').innerHTML.replace(/tonclick/g, "onclick").replace(/tonmousedown/g, "onmousedown").replace(/tonmouseup/g, "onmouseup").replace(/draggable="false"/g,"")//替换tonclick启用点击事件,去除drag属性
       // console.log(this.rawHtml)
     },
     //获取背景图片
@@ -387,6 +415,7 @@ export default {
     getBtnImg(){
       this.$http.get('/device/getTemplateByType?type=buttonImg').then(res=>{
         this.btnImgList = res.data
+        this.getTeamplate()
       })
     },
     exportHtml(){
@@ -419,7 +448,7 @@ export default {
     },
     RadiusChange(){
       if(this.selectWg.style){
-        this.form[this.selectIndex].btnStyle['border-radius']=this.WgBorderRadius+'px'
+        this.form[this.selectIndex].btnStyle['border-radius']=this.WgBorderRadius+'%'
       }
     },
     PaddingChange(){
@@ -462,6 +491,7 @@ export default {
     },
     showTest(){
       this.gethtml()
+      
       document.getElementById('testBox').innerHTML = this.rawHtml
       document.getElementById('testBox').style['background-image']=`url(${this.bcImg})`
       this.testShow = true;
@@ -520,13 +550,13 @@ export default {
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
               
+              this.moveTarget = e.target
               if(this.canMove){
                   //获取兄弟节点的top,left,width(400),height(300)  
                   // target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
                   
                   target.style.position = 'absolute'
-                  
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
                   let a = 10/uiBox.offsetWidth*100
@@ -537,23 +567,44 @@ export default {
                   if(y>yBoundary){y=yBoundary}else if(y<0){y=0}
                   
                   target.style.left =x + '%';
-                  
-                   target.style.top =y + '%';
+                  target.style.top =y + '%';
+                  this.wgLeft = `${x}%` 
+                  this.wgTop = `${y}%`
                  if(target.getAttribute('data-index')){
                     let index = target.getAttribute('data-index')
-                    this.form[index].btnStyle.position = 'absolute'
-                    this.form[index].btnStyle.left = x +'%'
-                     this.form[index].btnStyle.top = y +'%'
+                    if(this.form[index].btnStyle){
+                      this.form[index].btnStyle.position = 'absolute'
+                    }
+                    
                   }
                   
               }
           };
         document.onmouseup = (e) => {
+          let index = this.moveTarget.getAttribute('data-index')
+          this.form[index].btnStyle.left = this.wgLeft?this.wgLeft:this.form[index].btnStyle.left
+          this.form[index].btnStyle.top = this.wgTop?this.wgTop:this.form[index].btnStyle.top
           document.onmousemove = null
-         
           this.canMove = false
         };
       // console.log(uiBox.offsetLeft)
+    },
+    //前进后退
+    goBack(){
+      this.indexFlag=false;
+      if(this.stackIndex>1){
+        this.stackIndex--
+      }
+      this.form=this.commondStack[this.stackIndex];
+      setTimeout(()=>{this.indexFlag=true},0)
+    },
+    goForward(){
+      this.indexFlag=false;
+      if(this.stackIndex<(this.commondStack.length-1)){
+        this.stackIndex++
+      }
+      this.form=this.commondStack[this.stackIndex];
+      setTimeout(()=>{this.indexFlag=true},0)
     }
   },
 }
@@ -587,16 +638,22 @@ export default {
     background-color: #fff ;
     transition: all ease-in-out 0.5s;
     margin: 0 auto;
-    overflow: hidden;
     background-size: cover !important;
     position: relative;
   }
-  
+  .wgBox{
+    width: 375px;
+    height: 667px;
+    position: relative;
+  }
   .grid{
     width: 100%;
     height: 100%;
     background-image: linear-gradient(90deg, rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%),linear-gradient(rgba(200, 0, 0, 0.15) 10%, rgba(0, 0, 0, 0) 10%);
     background-size: 10px 10px;
+    position: absolute;
+    top: 0;
+    z-index:0;
     display: none;
   }
   .Pc{

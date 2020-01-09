@@ -27,7 +27,7 @@
           class="icon-item"
           :class="{ 'is-active': isActive(item) }"
           @click="onClickSelected(item)">
-          <img :src="item.resource_data" style="width:40px;height:40px;"/>
+          <img :src="item.resource_data" style="width:40px;height:40px"/>
         </div>
         
       </el-tooltip>
@@ -44,7 +44,7 @@
         <!-- 显示图标 -->
         <div class="icon-item">
           <i :class="value?'hide':'el-icon-plus'"></i>
-          <img :src="value" :class="value?'btnImg':'hide'" />
+          <img :src="value" :class="value?'btnImg':'hide'" class="itemBox"/>
         </div>
         <!-- 清空按钮 -->
         <div v-show="value" class="btn-clear">
@@ -107,6 +107,9 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.itemBox{
+  background: #78BDF3;
+}
 .btnImg{
     width: 45px;
     height: 45px;
@@ -127,7 +130,7 @@ export default {
   display: inline-block;
   width: $size + 2px;
   height: $size + 2px;
-  border: 1px dashed blue;
+  border: 1px dashed #78BDF3;
   border-radius: 5px;
   text-align: center;
   cursor: pointer;
@@ -136,7 +139,7 @@ export default {
   // 菜单打开状态
   &.is-opened, &:hover { border-color: green; }
   // 禁用状态
-  &.is-disabled:hover { border-color: blue !important; } 
+  &.is-disabled:hover { border-color: #78BDF3 !important; } 
   &.is-disabled,
   &.is-disabled > .icon-item,
   &.is-disabled > .btn-clear {

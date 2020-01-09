@@ -11,7 +11,7 @@ export default{
             <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
         </head>
         <body>
-        <div style="background:url(${bc});background-size:cover;background-repeat:no-repeat;${size};position:relative"
+        <div style="background:url(${bc});background-size:cover;background-repeat:no-repeat;${size};position:relative;text-align:center;"
         >
         <div id="msgBox" style="width: 300px;
             height: 100px;
@@ -271,9 +271,9 @@ export default{
           .subCommond{
             display:none;
             position:absolute;
-            width:98vw;
+            width:80%;
             height:90vh;
-            margin-left:-1vw;
+            margin:10%;
             z-index: 9;
             text-align:center;
             padding:15px;

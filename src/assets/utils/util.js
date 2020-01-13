@@ -251,7 +251,7 @@ export default{
                 arr.map((item,index)=>{
                     this.form.map((e,i)=>{
                         if(index===i){
-                            item.innerHTML = e?e:item.innerHTML
+                            item.childNode[1].innerHTML = e?e:item.innerHTML
                         }
                     })
                 })
@@ -311,6 +311,18 @@ export default{
               display:flex;
               justify-content:center;
               margin:30% auto;
+          }
+          .leftIcon{
+            vertical-align: middle;
+            width: 30%;
+            max-height: 100%;
+            margin-right: 5%;
+          }
+          .topIcon{
+            width: 30%;
+            max-height: 100%;
+            margin:5% auto;
+            display: block;
           }
     </style>
     </html>`

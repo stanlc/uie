@@ -3,8 +3,8 @@
     <div>
       <div class="head clearfix">
         <div style="float:left">
-            <el-button type="text" class="topBtn" @click="goBack" ref="backBtn">退一步{{stackIndex}}</el-button>
-            <el-button type="text" class="topBtn" @click="goForward">进一步</el-button>
+            <el-button type="text" class="topBtn" @click="goBack" ref="backBtn" :disabled="this.commondStack.length===1">退一步</el-button>
+            <el-button type="text" class="topBtn" @click="goForward" :disabled="this.historyStack.length<1">进一步</el-button>
             <el-button type="text" class="topBtn" @click="form=[]">重置</el-button>
         </div>
         <div style="float:right">
@@ -64,10 +64,15 @@
                 data-level='first'
                 class="sendControlBtn parentBtn"
                 v-if="element.type==='btn'"
-                >{{element.name}}</button>
+                >
+                <img :src="element.iconUrl" :class="element.iconPosition">
+                <span>{{element.name}}</span></button>
                 <!-- 有多种指令 -->
                 <template v-else>
-                    <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" ontouchstart="holdDown(event)" ontouchend="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">{{element.name}}</button>
+                    <button data-level='second' tonmousedown="holdDown(event)" tonmouseup="holdUp(event)" ontouchstart="holdDown(event)" ontouchend="holdUp(event)" :data-index='index' :data-cmdName="element.cmdName" :data-id='element.id' :style="element.btnStyle" class="parentBtn">
+                      <img :src="element.iconUrl" :class="element.iconPosition">
+                      <span>{{element.name}}</span>
+                      </button>
                     <div :id="element.id" class="subCommond" >
                       <a :onclick="`$('#${element.id}').hide();`" icon="el-icon-circle-close">X</a>
                       <div class="commondBox">
@@ -107,60 +112,125 @@
         <div class="editor">
           <el-tabs v-model="activeName" @tab-click="handleClick">
             <el-tab-pane label="全局" name="first">
-              <div class="selectImgEmpty" @click="selectBc($event)">
-                <span>无主题</span>
-              </div>
-              <div class="selectImg" @click="selectBc($event)" v-for="item in bcImgList" :key="item.id">
-                <img :src="item.resource_data?item.resource_data:''" />
-              </div>
+              <el-collapse >
+                <el-collapse-item title="系统背景" name="1">
+                  <div class="selectImgEmpty" @click="selectBc($event)">
+                    <span>无主题</span>
+                  </div>
+                  <div class="selectImg" @click="selectBc($event)" v-for="item in bcImgList" :key="item.id">
+                    <img :src="item.resource_data?item.resource_data:''" />
+                  </div>
+                </el-collapse-item>
+                <el-collapse-item title="上传背景">
+                  <el-upload
+                  action="#"
+                  list-type="picture-card"
+                  :auto-upload="false"
+                  ref="upload">
+                    <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
+                    <i slot="default" class="el-icon-plus"></i>
+                    <div slot="file" slot-scope="{file}">
+                      <img
+                        class="el-upload-list__item-thumbnail"
+                        :src="file.url" alt=""
+                      >
+                      <span class="el-upload-list__item-actions">
+                        <span
+                          class="el-upload-list__item-preview"
+                          @click="handlePictureCardPreview(file)"
+                        >
+                          <i class="el-icon-zoom-in"></i>
+                        </span>
+                        <span
+                          v-if="!disabled"
+                          class="el-upload-list__item-delete"
+                          @click="handleCheck(file)"
+                        >
+                          <i class="el-icon-check"></i>
+                        </span>
+                        <span
+                          v-if="!disabled"
+                          class="el-upload-list__item-delete"
+                          @click="handleRemove(file)"
+                        >
+                          <i class="el-icon-delete"></i>
+                        </span>
+                      </span>
+                    </div>
+                  </el-upload>
+                  <el-dialog :visible.sync="uploadDialogVisible">
+                    <img width="100%" :src="dialogImageUrl" alt="">
+                  </el-dialog>
+                </el-collapse-item>
+              </el-collapse>
+              
+              
             </el-tab-pane>
             <el-tab-pane label="属性" name="second">
+              <el-collapse>
+                <el-collapse-item title="外观设置">
+                  <el-form>
+                    <el-form-item label="组件名称">
+                      <el-input v-model="selectWgInfo" @input="changeWgInfo"></el-input>
+                    </el-form-item>
+                    <el-form-item label="显示文字">
+                      <el-switch
+                        v-model="showText"
+                        active-color="#13ce66"
+                        inactive-color="#ff4949"
+                        @change="changeText">
+                      </el-switch>
+                    </el-form-item>
+                  </el-form>
+                  <el-form :inline="true">
+                    <el-form-item label="文字颜色">
+                      <el-color-picker v-model="textColor" @change="colorPick"></el-color-picker>
+                    </el-form-item>
+                    <el-form-item label="按钮颜色">
+                      <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
+                    </el-form-item>
+                  </el-form>
+                </el-collapse-item>
+                <el-collapse-item title="图标设置">
+                  <el-form :inline="true">
+                      <el-form-item label="图标样式">
+                      <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
+                      </el-form-item>
+                      <el-form-item label="图标位置">
+                        <el-switch
+                          v-model="btnIcon"
+                          active-text="上"
+                          inactive-text="左"
+                          active-color="#13ce66"
+                          inactive-color="#ff4949"
+                          @change="changeIconPosition">
+                        </el-switch>
+                      </el-form-item>
+                  </el-form>
+                </el-collapse-item>
+                <el-collapse-item title="位置大小">
+                  <el-form>
+                    <el-form-item label="组件宽度"> 
+                      <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="1"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="组件高度"> 
+                      <el-input-number v-model="WgHeight" @change="HeightChange" :min="1" :max="100" :step="1"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="组件圆角"> 
+                      <el-input-number v-model="WgBorderRadius" @change="RadiusChange" :min="0" :max="100" :step="1"></el-input-number>
+                    </el-form-item>
+                  </el-form>
+                  <el-form :inline="true">
+                    <el-form-item >
+                      <el-button type="primary">上移一层</el-button>
+                    </el-form-item>
+                    <el-form-item>
+                      <el-button type="primary">下移一层</el-button>
+                    </el-form-item>
+                  </el-form>
+                </el-collapse-item>
+              </el-collapse>
               <el-form>
-                <el-form-item label="组件信息">
-                  <el-input v-model="selectWgInfo" @input="changeWgInfo"></el-input>
-                </el-form-item>
-                <el-form-item label="显示文字">
-                  <el-switch
-                    v-model="showText"
-                    active-color="#13ce66"
-                    inactive-color="#ff4949"
-                    @change="changeText">
-                  </el-switch>
-                </el-form-item>
-              </el-form>
-              <el-form :inline="true">
-                <el-form-item label="文字颜色">
-                  <el-color-picker v-model="textColor" @change="colorPick"></el-color-picker>
-                </el-form-item>
-                <el-form-item label="按钮颜色">
-                  <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
-                </el-form-item>
-              </el-form>
-              <el-form :inline="true">
-                  <el-form-item label="按钮图标">
-                   <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
-                  </el-form-item>
-                  <!-- <el-form-item label="按钮背景">
-                   <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
-                  </el-form-item> -->
-              </el-form>
-              <el-form>
-                
-                <el-form-item label="组件宽度"> 
-                   <el-input-number v-model="WgWidth" @change="WidthChange" :min="0" :max="100" :step="1"></el-input-number>
-                </el-form-item>
-                <el-form-item label="组件高度"> 
-                   <el-input-number v-model="WgHeight" @change="HeightChange" :min="1" :max="100" :step="1"></el-input-number>
-                </el-form-item>
-                <el-form-item label="按钮圆角"> 
-                   <el-input-number v-model="WgBorderRadius" @change="RadiusChange" :min="0" :max="100" :step="1"></el-input-number>
-                </el-form-item>
-                <!-- <el-form-item label="组件内边距"> 
-                   <el-input v-model="WgPadding" @change="PaddingChange"></el-input>
-                </el-form-item> -->
-                <!-- <el-form-item label="组件外边距"> 
-                   <el-input v-model="WgMargin" @change="MarginChange"></el-input>
-                </el-form-item> -->
                 <el-form-item>
                   <el-button @click="remove" type="danger" :disabled="canDel">删除</el-button>
                 </el-form-item>
@@ -203,7 +273,7 @@ export default {
       activeName: 'second',
       form:[],
       commondStack:[],
-      stackIndex:0,
+      historyStack:[],
       indexFlag:true,
       cmdList:[],
       bcImgList:[],
@@ -276,7 +346,11 @@ export default {
       brothersinfo:[], 
       wgLeft:'',
       wgTop:'',  
-      moveTarget:{},  
+      moveTarget:'',  
+      dialogImageUrl: '',
+      uploadDialogVisible: false,
+      disabled: false,
+      btnIcon:false,
     }
   },
   computed:{
@@ -355,6 +429,8 @@ export default {
           type:'btn',
           method:'commonSend(event)',
           btnStyle:Object.assign({},this.btnStyle),
+          iconUrl:'',
+          iconPosition:'leftIcon',
         })
       }else{
         let arr = e.cmdDownParams
@@ -363,7 +439,9 @@ export default {
           cmdName:e.cmd_name,
           btnStyle:Object.assign({},this.btnStyle),
           id:e.id,
-          obj:arr
+          obj:arr,
+          iconUrl:'',
+          iconPosition:'leftIcon',
         })
         // arr.map(item=>{
         //     this.form.push({
@@ -379,22 +457,28 @@ export default {
     },
     //获取选择的组件
     boxClick(e){
-      if(e.target.innerHTML[0]!=='<'){
+      if(e.target.tagName==='BUTTON'){
+        // e.stopPropagation();
         this.selectWg=e.target
         this.canDel = false
         this.selectIndex = e.target.getAttribute('data-index')
-        this.selectWgInfo = this.form[this.selectIndex].name
-        this.WgWidth = this.form[this.selectIndex].btnStyle.width.replace(/%/g,"")
-        this.WgHeight = this.form[this.selectIndex].btnStyle.height.replace(/%/g,"")
-        this.WgPadding = this.form[this.selectIndex].btnStyle.padding
-        this.WgMargin = this.form[this.selectIndex].btnStyle.margin
-        this.showText = this.form[this.selectIndex].btnStyle.color!=='rgba(0,0,0,0)'
-        this.textColor = this.form[this.selectIndex].btnStyle.color
-        this.WgBorderRadius =parseInt(this.form[this.selectIndex].btnStyle['border-radius']) 
-        this.btnColor =  this.form[this.selectIndex].btnStyle['background-color']
-        let btnImg = this.form[this.selectIndex].btnStyle['background-image'].replace(/url[(]/g,"").replace(')',"")
-        this.selectedBtnImg = btnImg.length>1?btnImg:''
+        if(this.form.length>=1){
+          this.selectWgInfo = this.form[this.selectIndex].name
+          this.WgWidth = this.form[this.selectIndex].btnStyle.width.replace(/%/g,"")
+          this.WgHeight = this.form[this.selectIndex].btnStyle.height.replace(/%/g,"")
+          this.WgPadding = this.form[this.selectIndex].btnStyle.padding
+          this.WgMargin = this.form[this.selectIndex].btnStyle.margin
+          this.showText = this.form[this.selectIndex].btnStyle.color!=='rgba(0,0,0,0)'
+          this.textColor = this.form[this.selectIndex].btnStyle.color
+          this.WgBorderRadius =parseInt(this.form[this.selectIndex].btnStyle['border-radius']) 
+          this.btnColor =  this.form[this.selectIndex].btnStyle['background-color']
+          let btnImg = this.form[this.selectIndex].btnStyle['background-image'].replace(/url[(]/g,"").replace(')',"")
+          this.selectedBtnImg = btnImg.length>1?btnImg:''
+          this.btnIcon = this.form[this.selectIndex].iconPosition==='leftIcon'?false:true
+        }
+       
       }else{
+        return false;
         this.canDel = true
       }
     },
@@ -507,6 +591,8 @@ export default {
       this.pageData.bcImg = e.target.src
     },
     btnImgSelected(e){
+      
+      
       if(e.resource_data){
         this.selectedBtnImg = e.resource_data
       }else{
@@ -516,15 +602,27 @@ export default {
       }
       if(this.selectWgInfo!=='请选择组件'){
         if(e.resource_data){
-          this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
-          this.form[this.selectIndex].btnStyle['background-size'] = 'cover !important'
+          this.form[this.selectIndex].iconUrl = e.resource_data
+          // this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
+          // this.form[this.selectIndex].btnStyle['background-size'] = 'cover !important'
         }else{
           this.form[this.selectIndex].btnStyle['background-image'] = ''
         }
       }
     },
+    changeIconPosition(val){
+      if(val){
+        this.form[this.selectIndex].iconPosition = 'topIcon'
+      }else{
+        this.form[this.selectIndex].iconPosition = 'leftIcon'
+      }
+    },
     //拖拽改变定位
     move(e){
+      //阻止子元素事件
+      if(e.target.tagName!=='BUTTON'){
+        return false
+      }
       let uiBox = document.getElementById('uiBox')
       let target = e.target
       let orgX= e.pageX; 
@@ -550,12 +648,12 @@ export default {
       document.onmousemove = (e)=>{       //鼠标按下并移动的事件
               //用鼠标的位置减去鼠标相对元素的位置，得到元素的位置
               
-              this.moveTarget = e.target
+              
               if(this.canMove){
                   //获取兄弟节点的top,left,width(400),height(300)  
                   // target.style.left = target.offsetWidth/uiBox.offsetWidth*100+'%'
                   //移动当前元素
-                  
+                  this.moveTarget = e.target
                   target.style.position = 'absolute'
                   let xBoundary =(uiBox.offsetWidth- target.offsetWidth)/uiBox.offsetWidth*100
                   let yBoundary =(uiBox.offsetHeight- target.offsetHeight)/uiBox.offsetHeight*100
@@ -570,20 +668,24 @@ export default {
                   target.style.top =y + '%';
                   this.wgLeft = `${x}%` 
                   this.wgTop = `${y}%`
-                 if(target.getAttribute('data-index')){
-                    let index = target.getAttribute('data-index')
-                    if(this.form[index].btnStyle){
-                      this.form[index].btnStyle.position = 'absolute'
+                  if(target.getAttribute('data-index')){
+                      let index = target.getAttribute('data-index')
+                      if(this.form[index].btnStyle){
+                        this.form[index].btnStyle.position = 'absolute'
+                      }
+                      
                     }
-                    
-                  }
                   
               }
           };
         document.onmouseup = (e) => {
-          let index = this.moveTarget.getAttribute('data-index')
-          this.form[index].btnStyle.left = this.wgLeft?this.wgLeft:this.form[index].btnStyle.left
-          this.form[index].btnStyle.top = this.wgTop?this.wgTop:this.form[index].btnStyle.top
+          if( this.moveTarget!==''){
+            let index =this.moveTarget.getAttribute('data-index')
+            if(this.form.length>1){
+              this.form[index].btnStyle.left = this.wgLeft?this.wgLeft:this.form[index].btnStyle.left
+              this.form[index].btnStyle.top = this.wgTop?this.wgTop:this.form[index].btnStyle.top
+            }
+          }
           document.onmousemove = null
           this.canMove = false
         };
@@ -592,20 +694,53 @@ export default {
     //前进后退
     goBack(){
       this.indexFlag=false;
-      if(this.stackIndex>1){
-        this.stackIndex--
+      let len = this.commondStack.length
+      let len2 = this.historyStack.length
+      if(len>1){
+        let arr = JSON.stringify(this.commondStack.pop()) 
+        this.historyStack.push(JSON.parse(arr))
+        if(JSON.stringify(this.form) === arr){
+          arr = JSON.stringify(this.commondStack.pop()) 
+          this.historyStack.push(JSON.parse(arr)) 
+        }
+        this.form=JSON.parse(arr)
       }
-      this.form=this.commondStack[this.stackIndex];
       setTimeout(()=>{this.indexFlag=true},0)
     },
     goForward(){
       this.indexFlag=false;
-      if(this.stackIndex<(this.commondStack.length-1)){
-        this.stackIndex++
+      let len = this.historyStack.length
+      if(len>1){
+        this.commondStack.push(this.historyStack.pop())
       }
-      this.form=this.commondStack[this.stackIndex];
+      let arr =this.historyStack.pop()
+      this.form = arr 
+      this.commondStack.push(arr)
       setTimeout(()=>{this.indexFlag=true},0)
-    }
+    },
+    //上传图片方法
+    handleRemove(file) {
+      let fileList = this.$refs.upload.uploadFiles;
+      let index = fileList.findIndex( fileItem => {
+        return fileItem.uid === file.uid
+      })
+      fileList.splice(index, 1)
+      this.bcImg=''
+    },
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.uploadDialogVisible = true;
+    },
+    handleCheck(file) {
+      var This = this;
+      var reader = new FileReader();
+      reader.readAsDataURL(file.raw);
+      reader.onload = function(e){ 
+          this.result // base64编码
+          This.bcImg = this.result;
+      }
+      console.log(this.bcImg)
+    },
   },
 }
 </script>
@@ -753,5 +888,17 @@ export default {
     height: 0;
     clear: both;
     zoom:1;
+  }
+  .leftIcon{
+    vertical-align: middle;
+    width: 30%;
+    max-height: 100%;
+    margin-right: 5%;
+  }
+  .topIcon{
+    width: 30%;
+    max-height: 100%;
+    margin:5% auto;
+    display: block;
   }
 </style>

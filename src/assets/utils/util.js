@@ -15,6 +15,7 @@ export default{
         >
         <div id="msgBox" style="width: 300px;
             height: 100px;
+            overflow:auto;
             position: absolute;
             z-index:9;
             display:none;
@@ -50,6 +51,7 @@ export default{
         getCmdParams = function(thisDom){
                 let id = thisDom.getAttribute("data-id")
                 var operation =  thisDom.getAttribute("data-cmdName");
+                var title = thisDom.child[1].innerHTML
                 var paramsArray = $("#"+id).serializeArray();
                 var map = {};
                 $.each(paramsArray, function () {
@@ -57,7 +59,8 @@ export default{
                 });
                 var array =  {
                     operation:operation,
-                    controlParams:map
+                    controlParams:map,
+                    title:title
                 };
                 return array;
             };
@@ -153,7 +156,13 @@ export default{
                 {
                     loop = 0;
                     clearInterval(time);//便不再继续重复此函数 （clearInterval取消周期性执行）
-                    myVue.nickName = e.target.innerHTML
+                    let name
+                    if(e.target.tagName==='SPAN'){
+                        name = e.target.innerHTML
+                    }else{
+                        name = e.target.getElementsByTagName('span')[0].innerHTML
+                    }
+                    myVue.nickName = name
                     $('.subCommond').hide()
                     $('#nickName').fadeIn(500)
                     
@@ -164,8 +173,12 @@ export default{
         {
             clearInterval(time);//如果按下时间不到500毫秒便弹起，
             setTimeout(()=>{loop=1},0)
-            let level = e.target.getAttribute('data-level')
-            let id = e.target.getAttribute('data-id')
+            let target = e.target
+            if(e.target.tagName==='SPAN' || e.target.tagName==='IMG'){
+                target = e.target.parentNode
+            }
+            let level = target.getAttribute('data-level')
+            let id = target.getAttribute('data-id')
             if(loop!==0){
                 if(level==='first'){
                     commonSend(event)
@@ -251,7 +264,15 @@ export default{
                 arr.map((item,index)=>{
                     this.form.map((e,i)=>{
                         if(index===i){
-                            item.childNode[1].innerHTML = e?e:item.innerHTML
+                            let name
+                            if(item.tagName==='SPAN'){
+                                name = item.innerHTML
+                                item.innerHTML = e?e:name
+                            }else{
+                                name = item.getElementsByTagName('span')[0].innerHTML
+                                item.getElementsByTagName('span')[0].innerHTML = e?e:name
+                            }
+                           
                         }
                     })
                 })

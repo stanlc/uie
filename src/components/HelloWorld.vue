@@ -27,12 +27,23 @@
       </div>
       <div class="main">
         <div class="list">
-          <ul>
-            <li v-for="item in cmdList" :key="item.id">
-              <el-button type="text" @click="addComp(item)" :disabled="form.findIndex(e=>e.name===item.cmd_readme)>-1">{{item.cmd_readme}}</el-button>
-            </li>
-          </ul>
-        </div>
+          <el-collapse >
+            <el-collapse-item title="指令组件" name="1">
+              
+                <ul>
+                  <li v-for="item in cmdList" :key="item.id">
+                    <el-button type="text" @click="addComp(item)" :disabled="form.findIndex(e=>e.name===item.cmd_readme)>-1">{{item.cmd_readme}}</el-button>
+                  </li>
+                </ul>
+            
+            </el-collapse-item>
+            <el-collapse >
+              <el-collapse-item title="装饰组件" name="2">
+                <el-button type="text" @click="addComp('box')" >添加装饰组件</el-button>
+              </el-collapse-item>
+            </el-collapse>
+          </el-collapse>
+         </div>
         
         <!-- 测试窗口 -->
         <div id="testWindow" class="textBox" v-show="testShow">
@@ -53,6 +64,7 @@
                 :key="element.id"
                 style="display:inline;height:100%"
                 @mousedown="move"
+                @click.shift="multiSelect"
                 >
                 <!-- 只有一种指令，默认为按钮 -->
                 <button
@@ -76,9 +88,13 @@
                     <div :id="element.id" class="subCommond" >
                       <a :onclick="`$('#${element.id}').hide();`" icon="el-icon-circle-close">X</a>
                       <div class="commondBox">
+                        <div v-for="val in element.obj.param_val" :key="val.key">{{val}}</div>
                         <el-form label-width="80px" :id="element.cmdName">
                           <el-form-item :label="item.param_name" v-for="item in element.obj" :key="item.param_key">
-                            <el-input v-model="input" :placeholder="item.param_readme" :name="item.param_key"></el-input>
+                            <select v-model="select" v-if="item.param_type==='array'" :name="item.param_key">
+                              <option v-for="a in JSON.parse(item.param_val)" :key="a.key" :value="a.value" :label="a.key"></option>
+                            </select>
+                            <el-input v-model="input" :placeholder="item.param_readme" :name="item.param_key" v-if="item.param_type==='string'"></el-input>
                           </el-form-item>
                         </el-form>
                             <button
@@ -121,46 +137,31 @@
                     <img :src="item.resource_data?item.resource_data:''" />
                   </div>
                 </el-collapse-item>
-                <el-collapse-item title="上传背景">
+                <el-collapse-item title="用户背景">
+                  <div class="selectImg" @click="selectBc($event)" v-for="item in userImgList" :key="item.id">
+                    <img :src="item.resource_data?item.resource_data:''" />
+                  </div>
                   <el-upload
-                  action="#"
-                  list-type="picture-card"
-                  :auto-upload="false"
-                  ref="upload">
-                    <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-                    <i slot="default" class="el-icon-plus"></i>
-                    <div slot="file" slot-scope="{file}">
-                      <img
-                        class="el-upload-list__item-thumbnail"
-                        :src="file.url" alt=""
-                      >
-                      <span class="el-upload-list__item-actions">
-                        <span
-                          class="el-upload-list__item-preview"
-                          @click="handlePictureCardPreview(file)"
-                        >
-                          <i class="el-icon-zoom-in"></i>
-                        </span>
-                        <span
-                          v-if="!disabled"
-                          class="el-upload-list__item-delete"
-                          @click="handleCheck(file)"
-                        >
-                          <i class="el-icon-check"></i>
-                        </span>
-                        <span
-                          v-if="!disabled"
-                          class="el-upload-list__item-delete"
-                          @click="handleRemove(file)"
-                        >
-                          <i class="el-icon-delete"></i>
-                        </span>
-                      </span>
-                    </div>
+                    class="upload-demo"
+                    ref="upload"
+                    action="string"
+                    accept="image/jpeg,image/png,image/jpg"
+                    list-type="picture-card"
+                    :before-upload="onBeforeUploadImage"
+                    :http-request="UploadImage"
+                    :on-change="fileChange"
+                    :file-list="fileList"
+                  > 
+                    <el-button size="small" type="primary">添加图片</el-button>
+                    <div slot="tip" class="el-upload__tip">只能上传jpg/jpeg/png文件，且不超过500kb</div>
                   </el-upload>
-                  <el-dialog :visible.sync="uploadDialogVisible">
-                    <img width="100%" :src="dialogImageUrl" alt="">
-                  </el-dialog>
+                  <el-button size="small" type="primary" @click="uploadBc">点击上传</el-button>
+                </el-collapse-item>
+                <el-collapse-item title="纯色背景">
+                  <el-color-picker
+                    v-model="bcColor"
+                    @change="changeBcColor">
+                  </el-color-picker>
                 </el-collapse-item>
               </el-collapse>
               
@@ -186,16 +187,24 @@
                     <el-form-item label="文字颜色">
                       <el-color-picker v-model="textColor" @change="colorPick"></el-color-picker>
                     </el-form-item>
-                    <el-form-item label="按钮颜色">
+                    <el-form-item label="组件颜色">
                       <el-color-picker v-model="btnColor" @change="colorBtnPick"></el-color-picker>
                     </el-form-item>
+                    <el-form-item label="装饰组件背景">
+                        <btn-selector :options="bcImgList" :value="selectedBoxImg" @selected="boxImgSelected"></btn-selector>
+                      </el-form-item>
                   </el-form>
                 </el-collapse-item>
                 <el-collapse-item title="图标设置">
                   <el-form :inline="true">
-                      <el-form-item label="图标样式">
-                      <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
-                      </el-form-item>
+                        <el-collapse>
+                          <el-collapse-item title="系统图标">
+                            <btn-selector :options="btnImgList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
+                          </el-collapse-item>
+                          <el-collapse-item title="用户图标">
+                            <btn-selector :options="userBtnList" :value="selectedBtnImg" @selected="btnImgSelected"></btn-selector>
+                          </el-collapse-item>
+                        </el-collapse>
                       <el-form-item label="图标位置">
                         <el-switch
                           v-model="btnIcon"
@@ -222,10 +231,32 @@
                   </el-form>
                   <el-form :inline="true">
                     <el-form-item >
-                      <el-button type="primary">上移一层</el-button>
+                      <el-button type="primary" @click="pgUp" :disabled="form[selectIndex] && form[selectIndex].btnStyle['z-index']>=8">上移一层</el-button>
                     </el-form-item>
                     <el-form-item>
-                      <el-button type="primary">下移一层</el-button>
+                      <el-button type="primary" @click="pgDown" :disabled="form[selectIndex] && form[selectIndex].btnStyle['z-index']===0">下移一层</el-button>
+                    </el-form-item>
+                  </el-form>
+                </el-collapse-item>
+              </el-collapse>
+              <el-collapse>
+                <el-collapse-item title="批量修改">
+                  <el-form>
+                    <el-form-item label="组件宽度"> 
+                      <el-input-number v-model="multiWgWidth" @change="multiWidthChange" :min="0" :max="100" :step="1"></el-input-number>
+                    </el-form-item>
+                    <el-form-item label="组件高度"> 
+                      <el-input-number v-model="multiWgHeight" @change="multiHeightChange" :min="1" :max="100" :step="1"></el-input-number>
+                    </el-form-item>
+                    <el-form-item>
+                      <el-button @click="multiMove('left')" ref="moveLeft" type="primary" size="small" :disabled="selectWgList.length<2" class="el-icon-caret-left"></el-button>
+                      <el-button @click="multiMove('right')" type="primary" size="small" :disabled="selectWgList.length<2" class="el-icon-caret-right"></el-button>
+                      <el-button @click="multiMove('top')" type="primary" size="small" :disabled="selectWgList.length<2" class="el-icon-caret-top"></el-button>
+                      <el-button @click="multiMove('bottom')" type="primary" size="small" :disabled="selectWgList.length<2" class="el-icon-caret-bottom"></el-button>
+                    </el-form-item>
+                    <el-form-item>
+                      <el-button @click="horizontaAlign" type="primary" :disabled="selectWgList.length<2">水平对齐</el-button>
+                      <el-button @click="verticalAlign" type="primary" :disabled="selectWgList.length<2">垂直对齐</el-button>
                     </el-form-item>
                   </el-form>
                 </el-collapse-item>
@@ -265,9 +296,9 @@ import { setTimeout } from 'timers'
 export default {
   name: 'HelloWorld',
   components: {draggable,BtnSelector},
-  props: {
-    msg: String
-  },
+  // props: {
+  //   msg: String
+  // },
   data() {
     return {
       activeName: 'second',
@@ -277,12 +308,20 @@ export default {
       indexFlag:true,
       cmdList:[],
       bcImgList:[],
+      userImgList:[],
+      userBtnList:[],
       btnImgList:[],
+      fileList:[],
+      uploadImg:{},
+      uploadData:'',
       selectedBtnImg:'',
+      selectedBoxImg:'',
       EditForm:{},
       selectWg:{},
+      selectWgList:[],
       selectIndex:0,
       bcImg:'',
+      bcColor:'',
       btnImg:'',
       canMove : false,
       dialogVisible:false,
@@ -296,8 +335,11 @@ export default {
       list:[1,2,3,4],
       WgWidth:10,
       WgHeight:10,
+      multiWgWidth:10,
+      multiWgHeight:10,
       rawHtml:'',
       input:'',
+      select:'',
       WgBorderRadius:'5%',
       WgPadding:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
       WgMargin:'0px 0px 0px 0px(依次为上、右、下、左，用空格隔开)',
@@ -316,7 +358,7 @@ export default {
         transition:'width ease-in 0.5s,height ease-in 0.5s',
         'background-size':'cover !important',
         '-webkit-appearance':'button',
-        'z-index': 2,
+        'z-index': 5,
         top:'',
         left:'',
         position:''
@@ -351,6 +393,8 @@ export default {
       uploadDialogVisible: false,
       disabled: false,
       btnIcon:false,
+      //多选标志
+      mutilSelect:false,
     }
   },
   computed:{
@@ -361,11 +405,19 @@ export default {
       if(sessionStorage.getItem('productCode')){
         return sessionStorage.getItem('productCode')
       }else{
-        let a = window.location.href
-        return a.substr(a.indexOf('=')+1,a.length-1)
+        let arr = this.getQuery() 
+        return arr[0].substr(arr[0].indexOf('=')+1,arr[0].length-1)
       }
       
     },
+    account(){
+      if(sessionStorage.getItem('account')){
+        return sessionStorage.getItem('account')
+      }else{
+        let arr = this.getQuery() 
+        return arr[1].substr(arr[1].indexOf('=')+1,arr[1].length-1)
+      }
+    }
   },
   watch:{
     //监听页面操作，压入操作栈
@@ -414,14 +466,40 @@ export default {
     getCmdObject(){
       this.$http.get('/device/getCmdByCode',{
         params:{
-          productCode:this.cmdCode
+          productCode:this.cmdCode,
         }
       }).then(res=>{
         this.cmdList = res.data
       })
     },
     addComp(e){
-      if(e.cmdDownParams.length===0){
+      if(e==='box'){
+        this.form.push({
+          name:'装饰组件',
+          cmdName:'',
+          type:'btn',
+          btnStyle:{
+            width:'30%',
+            height:'30%',
+            padding:'5px',
+            'background-color':'rgba(255,255,255,0.5)',
+            'background-image':'',
+            'background-repeat':'no-repeat',
+            border:'none',
+            'border-radius':'5px',
+            color:'rgba(0,0,0,0)',
+            cursor:'pointer',
+            'border-radius':'5px',
+            transition:'width ease-in 0.5s,height ease-in 0.5s',
+            'background-size':'cover !important',
+            '-webkit-appearance':'button',
+            'z-index': 2,
+            top:'',
+            left:'',
+            position:''
+          }
+        })
+      }else if(e.cmdDownParams.length===0){
           this.form.push({
           name:e.cmd_readme,
           cmdName:e.cmd_name,
@@ -458,8 +536,12 @@ export default {
     //获取选择的组件
     boxClick(e){
       if(e.target.tagName==='BUTTON'){
+        //去除其他按钮的选中标志
+        // Array.from(document.getElementsByClassName('parentBtn')).map(item=>{item.classList.remove('selected')})
         // e.stopPropagation();
         this.selectWg=e.target
+        //添加选中标志
+       
         this.canDel = false
         this.selectIndex = e.target.getAttribute('data-index')
         if(this.form.length>=1){
@@ -472,15 +554,30 @@ export default {
           this.textColor = this.form[this.selectIndex].btnStyle.color
           this.WgBorderRadius =parseInt(this.form[this.selectIndex].btnStyle['border-radius']) 
           this.btnColor =  this.form[this.selectIndex].btnStyle['background-color']
-          let btnImg = this.form[this.selectIndex].btnStyle['background-image'].replace(/url[(]/g,"").replace(')',"")
-          this.selectedBtnImg = btnImg.length>1?btnImg:''
+          let btnImg = this.form[this.selectIndex].iconUrl
+          this.selectedBtnImg = btnImg && btnImg.length>1?btnImg:''
           this.btnIcon = this.form[this.selectIndex].iconPosition==='leftIcon'?false:true
         }
-       
       }else{
         return false;
         this.canDel = true
       }
+    },
+    multiSelect(){
+      
+      setTimeout(()=>{
+          this.selectWg.classList.add('selected')
+          let item = this.form[this.selectIndex]
+          let index = this.selectWgList.indexOf(item)
+          if(index===-1){
+            this.selectWgList.push(item)
+            // console.log(this.selectWgList)
+          }else{
+            this.selectWgList.splice(index,1)
+            this.selectWg.classList.remove('selected')
+            // console.log(this.selectWgList)
+          }
+      },0)
     },
     gethtml(){
       this.showGrid = false
@@ -491,14 +588,26 @@ export default {
     },
     //获取背景图片
     getimg(){
-      this.$http.get('/device/getTemplateByType?type=img').then(res=>{
-        this.bcImgList = res.data
+      this.$http.get('/resource/getTemplateByType',{
+        params:{
+          type:'img',
+          account:this.account
+        }
+      }).then(res=>{
+        this.bcImgList = res.data.sys
+        this.userImgList = res.data.user
       })
     },
     //获取按钮背景图片
     getBtnImg(){
-      this.$http.get('/device/getTemplateByType?type=buttonImg').then(res=>{
-        this.btnImgList = res.data
+      this.$http.get('/resource/getTemplateByType',{
+        params:{
+          type:'buttonImg',
+          account:this.account
+        }
+      }).then(res=>{
+        this.btnImgList = res.data.sys
+        this.userBtnList = res.data.user
         this.getTeamplate()
       })
     },
@@ -524,10 +633,89 @@ export default {
         this.form[this.selectIndex].btnStyle.width=this.WgWidth+'%'
       }
     },
+    multiWidthChange(){
+      if(this.selectWgList.length>0){
+          this.selectWgList.map(item=>{
+          item.btnStyle.width=this.multiWgWidth+'%'
+        })
+      }
+      
+    },
     HeightChange(){
       if(this.selectWg.style){
         this.form[this.selectIndex].btnStyle.position = 'absolute'
         this.form[this.selectIndex].btnStyle.height=this.WgHeight+'%'
+      }
+    },
+    //批量修改
+    multiHeightChange(){
+      if(this.selectWgList.length>0){
+          this.selectWgList.map(item=>{
+          item.btnStyle.height=this.multiWgHeight+'%'
+        })
+      }
+    },
+    multiMove(dre){
+      let that = this
+      this.moveTarget = ''
+      switch (dre){
+        case 'left':if(this.selectWgList.length>0){
+                this.selectWgList.map(item=>{
+                if(parseInt(item.btnStyle.left)===0){
+                  return 
+                }else{
+                  item.btnStyle.left=parseInt(item.btnStyle.left)-1+'%'
+                }
+                
+              })
+            } break;
+        case 'right':if(this.selectWgList.length>0){
+                this.selectWgList.map(item=>{
+                if(parseInt(item.btnStyle.left)>80){
+                  return 
+                }else{
+                  item.btnStyle.left=parseInt(item.btnStyle.left)+1+'%'
+                }
+              })
+            } break;
+        case 'top':if(this.selectWgList.length>0){
+                this.selectWgList.map(item=>{
+                if(parseInt(item.btnStyle.top)===0){
+                  return 
+                }else{
+                  item.btnStyle.top=parseInt(item.btnStyle.top)-1+'%'
+                }
+              })
+            } break;
+        case 'bottom':if(this.selectWgList.length>0){
+                this.selectWgList.map(item=>{
+                if(parseInt(item.btnStyle.top)>80){
+                  return 
+                }else{
+                  item.btnStyle.top=parseInt(item.btnStyle.top)+1+'%'
+                }
+              })
+            } break;
+      }
+      
+    },
+    //多选对齐
+    horizontaAlign(){
+      this.moveTarget = ''
+      let left = this.selectWgList[0].btnStyle.left
+      if(this.selectWgList.length>0){
+          this.selectWgList.map(item=>{
+          item.btnStyle.left=left
+        })
+      }
+    },
+    verticalAlign(){
+      this.moveTarget = ''
+      let top = this.selectWgList[0].btnStyle.top
+      if(this.selectWgList.length>0){
+          this.selectWgList.map(item=>{
+          item.btnStyle.top=top
+        })
       }
     },
     RadiusChange(){
@@ -590,9 +778,12 @@ export default {
       this.bcImg = e.target.src
       this.pageData.bcImg = e.target.src
     },
+    changeBcColor(val){
+      let uibox = document.getElementById('uiBox')
+      uibox.style['background-image']=''
+      uibox.style.background = val
+    },
     btnImgSelected(e){
-      
-      
       if(e.resource_data){
         this.selectedBtnImg = e.resource_data
       }else{
@@ -606,9 +797,28 @@ export default {
           // this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
           // this.form[this.selectIndex].btnStyle['background-size'] = 'cover !important'
         }else{
-          this.form[this.selectIndex].btnStyle['background-image'] = ''
+          this.form[this.selectIndex].iconUrl = ''
         }
       }
+    },
+    boxImgSelected(e){
+        if(e.resource_data){
+          this.selectedBoxImg = e.resource_data
+        }else{
+          // this.selectWg.style.background = '#78bdf3'
+          this.selectedBoxImg = ''
+          
+        }
+        if(this.selectWgInfo==='装饰组件'){
+          if(e.resource_data){
+            this.form[this.selectIndex].btnStyle['background-image'] = `url(${e.resource_data})`
+            this.$forceUpdate()
+            // this.form[this.selectIndex].btnStyle['background-image']=`url(${e.resource_data})`
+            // this.form[this.selectIndex].btnStyle['background-size'] = 'cover !important'
+          }else{
+            this.form[this.selectIndex].btnStyle['backgroud-image']  = ''
+          }
+        }
     },
     changeIconPosition(val){
       if(val){
@@ -624,6 +834,8 @@ export default {
         return false
       }
       let uiBox = document.getElementById('uiBox')
+      let grid = document.getElementsByClassName('grid')[0]
+      grid.style['background-size'] = uiBox.offsetWidth/100+'px '+uiBox.offsetWidth/100+'px'
       let target = e.target
       let orgX= e.pageX; 
       let orgY= e.pageY;
@@ -719,28 +931,87 @@ export default {
       setTimeout(()=>{this.indexFlag=true},0)
     },
     //上传图片方法
-    handleRemove(file) {
-      let fileList = this.$refs.upload.uploadFiles;
-      let index = fileList.findIndex( fileItem => {
-        return fileItem.uid === file.uid
-      })
-      fileList.splice(index, 1)
-      this.bcImg=''
+    onBeforeUploadImage(file) {
+      const isIMAGE = file.type === 'image/jpeg' || 'image/jpg' || 'image/png'
+      const isLt1M = file.size / 1024 / 1024 < 1
+      if (!isIMAGE) {
+        this.$message.error('上传文件只能是图片格式!')
+      }
+      if (!isLt1M) {
+        this.$message.error('上传文件大小不能超过 1MB!')
+      }
+      return isIMAGE && isLt1M
+      console.log('a'+this.uploadImg)
     },
-    handlePictureCardPreview(file) {
-      this.dialogImageUrl = file.url;
-      this.uploadDialogVisible = true;
+    UploadImage(param){
+      // const formData = new FormData()
+      // formData.append('file', param.file)
+      // if(this.uploadImg.resource_data!==''){
+      //   this.$http.post('/resource/resourceInsert',this.uploadImg).then(response => {
+      //     console.log('上传图片成功')
+      //     param.onSuccess()  // 上传成功的图片会显示绿色的对勾
+      //     // 但是我们上传成功了图片， fileList 里面的值却没有改变，还好有on-change指令可以使用
+      //   }).catch(response => {
+      //     console.log('图片上传失败')
+      //     param.onError()
+      //   })
+      // }
     },
-    handleCheck(file) {
+    uploadBc(){
+        this.$http.post('/resource/resourceInsert',this.uploadImg).then(response => {
+          this.$message({
+            type:'success',
+            message:'上传成功'
+          })
+          this.getimg();
+          this.$refs.upload.clearFiles()
+        }).catch(response => {
+          this.$message({
+            type:'error',
+            message:'上传失败'
+          })
+        })
+    },
+    fileChange(file){
+      this.$refs.upload.clearFiles() //清除文件对象
+      this.logo = file.raw // 取出上传文件的对象，在其它地方也可以使用
+      this.fileList = [{name: file.name, url: file.url}] // 重新手动赋值filstList， 免得自定义上传成功了, 而fileList并没有动态改变， 这样每次都是上传一个对象
+      this.uploadImg.resource_name = file.name
+      this.uploadImg.resource_type = 'img'
+      this.uploadImg.resource_readme = '用户上传图片'
+      this.uploadImg.update_user=this.account
       var This = this;
+      //this.imageUrl = URL.createObjectURL(file.raw);
       var reader = new FileReader();
       reader.readAsDataURL(file.raw);
-      reader.onload = function(e){ 
-          this.result // base64编码
-          This.bcImg = this.result;
+      reader.onload =function(e){ 
+        this.result // 这个就是base64编码了
+        This.uploadImg.resource_data = this.result
       }
-      console.log(this.bcImg)
+      
     },
+    //调整层级
+    pgUp(){
+      let z = this.form[this.selectIndex].btnStyle['z-index']
+      if(z===8){
+        return 
+      }else{
+        this.form[this.selectIndex].btnStyle['z-index']++
+      }
+    },
+    pgDown(){
+      let z = this.form[this.selectIndex].btnStyle['z-index']
+      if(z===0){
+        return 
+      }else{
+        this.form[this.selectIndex].btnStyle['z-index']--
+      }
+    },
+    getQuery(){
+        let a = window.location.href
+        return a.split("&"); 
+    }
+
   },
 }
 </script>
@@ -900,5 +1171,8 @@ export default {
     max-height: 100%;
     margin:5% auto;
     display: block;
+  }
+  .selected{
+    border: red solid 2px !important;
   }
 </style>
